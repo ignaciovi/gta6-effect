@@ -39,7 +39,12 @@ function etParts(ts) {
   const p = Object.fromEntries(ET.formatToParts(new Date(ts)).map(x => [x.type, x.value]));
   return { hour: +p.hour % 24, weekend: p.weekday === "Sat" || p.weekday === "Sun" };
 }
-const fmtTime = ts => new Date(ts).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+// "Wed 12th, 11:00 PM" (viewer's local time)
+const fmtTime = ts => {
+  const d = new Date(ts);
+  return `${d.toLocaleString("en-US", { weekday: "short" })} ${ordinal(d.getDate())}, ${d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+};
 
 const series = (src, key) => (DATA[src]?.series?.[key] || []).filter(p => p[1] != null);
 
