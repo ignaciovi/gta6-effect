@@ -7,9 +7,10 @@ const C = { pink: "#f0428c", cyan: "#1aa5b8", orange: "#d9771f", base: "#8a7a9e"
 let CHART_W = 360;
 let DATA = {}, LAUNCH = Date.parse("2026-11-19T05:00:00Z"), RANGE_DAYS = 3;
 try { const r = localStorage.getItem("range"); if (r != null && Number.isFinite(+r)) RANGE_DAYS = +r; } catch { /* storage unavailable */ }
-// RANGE_DAYS = 0 means "All time": every point we have stored for the metric,
-// including backfilled history (storage is capped at 7 days by the collector).
-const rangeStart = () => RANGE_DAYS ? Date.now() - RANGE_DAYS * DAY : 0;
+// RANGE_DAYS = 0 means "Since Nov 1st '26": everything from the start of the
+// backfilled history (HISTORY_START in collector/config.py).
+const HISTORY_START = Date.parse("2026-11-01T00:00:00Z");
+const rangeStart = () => RANGE_DAYS ? Date.now() - RANGE_DAYS * DAY : HISTORY_START;
 
 // ---------- utils ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -129,14 +130,14 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
   let x0 = rangeStart();
   const pts = inRange(main, sessions);
   const ctx = sessions ? [] : context.filter(p => p[0] >= rangeStart());
-  const svg = svgEl("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, tabindex: "0", role: "img", "aria-label": `${name}, ${RANGE_DAYS ? RANGE_DAYS + " day" : "all-time"} chart` });
+  const svg = svgEl("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, tabindex: "0", role: "img", "aria-label": `${name}, ${RANGE_DAYS ? RANGE_DAYS + " day" : "since November 1st 2026"} chart` });
   if (pts.length < 2) {
     const t = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }); t.textContent = "Collecting data: next point within 30 min"; svg.append(t);
     return svg;
   }
   // Short history (e.g. a snapshot metric tracked for a few hours): zoom the x-axis to
   // the data instead of squeezing it into the right edge of a multi-day axis.
-  // "All time" always fits the data; a fixed range zooms (with a note) only when history is shorter.
+  // "Since Nov 1st" always fits the data; a fixed range zooms (with a note) only when history is shorter.
   const first = Math.min(pts[0][0], ctx.length ? ctx[0][0] : Infinity);
   const fit = !sessions && first > x0 + 2 * HOUR;
   const zoomed = fit && RANGE_DAYS > 0;
