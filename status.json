@@ -1,68 +1,68 @@
 {
  "steam": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:27:20Z",
+  "last_ok": "2026-11-15T16:30:13Z",
   "error": null,
-  "last_run": "2026-11-15T16:27:20Z"
+  "last_run": "2026-11-15T16:30:13Z"
  },
  "trends": {
   "state": "ok",
   "last_ok": "2026-11-15T16:04:13Z",
   "error": null,
-  "last_run": "2026-11-15T16:29:02Z"
+  "last_run": "2026-11-15T16:32:02Z"
  },
  "appstore": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:29:41Z",
+  "last_ok": "2026-11-15T16:32:05Z",
   "error": null,
-  "last_run": "2026-11-15T16:29:41Z"
+  "last_run": "2026-11-15T16:32:05Z"
  },
  "trending": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:29:03Z",
+  "last_ok": "2026-11-15T16:32:04Z",
   "error": null,
-  "last_run": "2026-11-15T16:29:03Z"
+  "last_run": "2026-11-15T16:32:04Z"
  },
  "twitch": {
-  "state": "skipped",
-  "last_ok": "2026-11-15T16:04:46Z",
-  "error": "TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET not set",
-  "last_run": "2026-11-15T16:29:41Z"
+  "state": "ok",
+  "last_ok": "2026-11-15T16:32:05Z",
+  "error": null,
+  "last_run": "2026-11-15T16:32:05Z"
  },
  "youtube": {
-  "state": "skipped",
-  "last_ok": "2026-11-15T16:08:55Z",
-  "error": "YOUTUBE_API_KEY not set",
-  "last_run": "2026-11-15T16:29:41Z"
+  "state": "ok",
+  "last_ok": "2026-11-15T16:32:11Z",
+  "error": null,
+  "last_run": "2026-11-15T16:32:11Z"
  },
  "stocks": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:29:42Z",
+  "last_ok": "2026-11-15T16:32:13Z",
   "error": null,
-  "last_run": "2026-11-15T16:29:42Z"
+  "last_run": "2026-11-15T16:32:13Z"
  },
  "tomtom": {
-  "state": "skipped",
-  "last_ok": "2026-11-15T16:04:48Z",
-  "error": "TOMTOM_API_KEY not set",
-  "last_run": "2026-11-15T16:29:41Z"
+  "state": "ok",
+  "last_ok": "2026-11-15T16:32:11Z",
+  "error": null,
+  "last_run": "2026-11-15T16:32:11Z"
  },
  "radar": {
-  "state": "skipped",
-  "last_ok": "2026-11-15T16:04:49Z",
-  "error": "CLOUDFLARE_RADAR_TOKEN not set",
-  "last_run": "2026-11-15T16:29:41Z"
+  "state": "ok",
+  "last_ok": "2026-11-15T16:32:12Z",
+  "error": null,
+  "last_run": "2026-11-15T16:32:12Z"
  },
  "github": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:27:22Z",
+  "last_ok": "2026-11-15T16:30:15Z",
   "error": null,
-  "last_run": "2026-11-15T16:27:22Z"
+  "last_run": "2026-11-15T16:30:15Z"
  },
  "wikiedits": {
   "state": "ok",
-  "last_ok": "2026-11-15T16:29:02Z",
+  "last_ok": "2026-11-15T16:32:02Z",
   "error": null,
-  "last_run": "2026-11-15T16:29:02Z"
+  "last_run": "2026-11-15T16:32:02Z"
  }
 }
