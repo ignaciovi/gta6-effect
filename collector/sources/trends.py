@@ -11,12 +11,12 @@ import time
 from pathlib import Path
 
 from common import session, Fresh
-from config import HISTORY_START_ISO, TRENDS_BATCHES
+from config import HISTORY_START_S, TRENDS_BATCHES
 
 BASE = "https://trends.google.com"
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "trends.json"
 MIN_INTERVAL_S = 55 * 60
-DAILY_INTERVAL_S = 6 * 3600  # daily series since HISTORY_START: refresh every 6h
+DAILY_INTERVAL_S = 6 * 3600  # earlier hourly windows since HISTORY_START: refresh every 6h
 
 
 def _json(text):
@@ -42,6 +42,17 @@ def _series(terms, geo="US", timeframe="now 7-d"):
             for i, t in enumerate(terms)}
 
 
+def _overlap_ratio(newer, older, terms):
+    """Scale factor mapping `older` onto `newer`, from the batch totals on shared hours."""
+    nt = {ts: sum(v for t in terms for tt, v in newer[t] if tt == ts) for ts, _ in newer[terms[0]]}
+    num = den = 0
+    for ts, _ in older[terms[0]]:
+        if ts in nt:
+            num += nt[ts]
+            den += sum(v for t in terms for tt, v in older[t] if tt == ts)
+    return num / den if den else None
+
+
 def fetch():
     try:
         daily_updated = json.loads(DATA_FILE.read_text()).get("meta", {}).get("daily_updated", 0)
@@ -61,12 +72,32 @@ def fetch():
         for term, pts in _series(terms).items():
             series[f"{batch}:{term}"] = pts
     meta = {"batches": TRENDS_BATCHES}
-    # Longer windows only come back at daily resolution (separately normalised by Google).
+    # Hourly history before the current week: Google serves hourly data for any
+    # 7-day window, but scales each window separately. Fetch windows back to
+    # HISTORY_START, each overlapping the next by a day, and rescale them onto
+    # the current week. The overlap day is kept so the site can re-match the
+    # scale against each newer hourly fetch.
     if time.time() - daily_updated > DAILY_INTERVAL_S:
-        window = f"{HISTORY_START_ISO[:10]} {time.strftime('%Y-%m-%d', time.gmtime())}"
         for batch, terms in TRENDS_BATCHES.items():
-            time.sleep(5)
-            for term, pts in _series(terms, timeframe=window).items():
-                series[f"{batch}:{term}:daily"] = pts
+            newer = {t: series[f"{batch}:{t}"] for t in terms}
+            early = {t: [] for t in terms}
+            start = min(newer[terms[0]])[0] // 1000
+            while start > HISTORY_START_S:
+                end = start + 86400
+                begin = max(HISTORY_START_S, end - 7 * 86400)
+                tf = f"{time.strftime('%Y-%m-%dT%H', time.gmtime(begin))} {time.strftime('%Y-%m-%dT%H', time.gmtime(end))}"
+                time.sleep(5)
+                win = _series(terms, timeframe=tf)
+                ratio = _overlap_ratio(newer, win, terms)
+                if ratio is None:
+                    break
+                scaled = {t: [[ts, v * ratio] for ts, v in win[t]] for t in terms}
+                for t in terms:
+                    # keep the overlap day only for the newest window (site re-matches on it)
+                    cut = None if not early[t] else min(early[t])[0]
+                    early[t] = [p for p in scaled[t] if cut is None or p[0] < cut] + early[t]
+                newer, start = scaled, begin
+            for t in terms:
+                series[f"{batch}:{t}:early"] = [[ts, round(v, 2)] for ts, v in early[t]]
         meta["daily_updated"] = int(time.time())
     return {"mode": "replace", "series": series, "meta": meta}

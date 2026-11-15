@@ -109,6 +109,19 @@ function dailyContext(hourly, daily) {
   return daily.filter(([t]) => t + DAY <= hourly[0][0]).map(([t, v]) => [t + DAY / 2, Math.round(v * k * 10) / 10]);
 }
 
+// Hourly Trends before the current week come from older 7-day windows that Google
+// scales differently. They share a day with the current week; rescale them on that
+// overlap and join them into one hourly series.
+function stitchEarly(hourly, early) {
+  if (!hourly.length || !early.length) return hourly;
+  const h = new Map(hourly);
+  let num = 0, den = 0;
+  for (const [t, v] of early) if (h.has(t)) { num += h.get(t); den += v; }
+  if (!den) return hourly;
+  const k = num / den, start = hourly[0][0];
+  return early.filter(([t]) => t < start).map(([t, v]) => [t, Math.round(v * k * 10) / 10]).concat(hourly);
+}
+
 // ---------- chart ----------
 function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = compact, step = false, sessions = false, context = [] }) {
   const W = Math.max(260, Math.round(CHART_W)), H = 150, M = { l: 44, r: 10, t: 10, b: 22 };
@@ -340,7 +353,7 @@ function renderAttention() {
   sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", headline: "{v} of the top 100 Twitch streams are about GTA VI", pts: series("twitch", "global_stream_share"), fmt: v => pct(v, 0),
     name: "% of top 100 live streams", showBaseline: false,
     note: `The 100 most-watched live streams worldwide whose game or title is GTA VI. Actually playing it: ${playing ? pct(playing[1], 0) : "–"}.` }));
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are watching GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are doing something related to GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
     name: "% of top-100 viewers", color: C.cyan, showBaseline: false,
     extra: tw?.meta?.top_gta6_streams_global?.length ? list(tw.meta.top_gta6_streams_global.map(s => [(s.playing ? "🎮 " : "💬 ") + s.user, compact(s.viewers), "viewers"])) : null,
     note: "🎮 playing GTA VI · 💬 mentions it in the title." }));
@@ -380,17 +393,17 @@ function renderWork() {
   // Wikipedia edits are still collected (data/wikiedits.json) but hidden from the page.
   const sickTerms = ["call in sick", "sick day"];
   const sick = sumSeries(sickTerms.map(k => series("trends", `sick:${k}`)));
-  const sickDaily = dailyContext(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:daily`))));
-  sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "US interest in “call in sick” + “sick day” searches: {v}", pts: sick, context: sickDaily, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
-    note: "Google Trends index; relative, not absolute counts. Before the last 7 days Google only gives daily values (faded line)." }));
+  const sickAll = stitchEarly(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:early`))));
+  sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "US interest in “call in sick” + “sick day” searches: {v}", pts: sickAll, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
+    note: "Google Trends index; relative, not absolute counts. Older weeks are stitched from overlapping 7-day windows, so their scale is approximate." }));
 }
 
 function renderFood() {
   const sec = $("#sec-food"); sec.replaceChildren();
   const terms = DATA.trends?.meta?.batches?.food || ["DoorDash", "Uber Eats", "pizza delivery", "Domino's"];
   const food = sumSeries(terms.map(k => series("trends", `food:${k}`)));
-  const foodDaily = dailyContext(food, sumSeries(terms.map(k => series("trends", `food:${k}:daily`))));
-  sec.append(card({ headline: "US interest in food-delivery searches: {v}", title: "US delivery searches (DoorDash, Uber Eats, pizza, Domino's)", pts: food, context: foodDaily, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4, wide: false }));
+  const foodAll = stitchEarly(food, sumSeries(terms.map(k => series("trends", `food:${k}:early`))));
+  sec.append(card({ headline: "US interest in food-delivery searches: {v}", title: "US delivery searches (DoorDash, Uber Eats, pizza, Domino's)", pts: foodAll, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4, wide: false }));
   const apps = DATA.appstore?.meta?.apps || {};
   const rows = Object.entries(apps).map(([k, label]) => {
     const pts = DATA.appstore.series[k] || [];
