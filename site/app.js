@@ -449,7 +449,7 @@ function renderMarket() {
   for (const [sym, title, color, blurb] of stocks) {
     const d = latest(series("stocks", `${sym}:pct`), 96)?.[1];
     sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
-      extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: blurb }));
+      extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: `${blurb} Trading hours only; nights and weekends are collapsed.` }));
   }
 }
 
