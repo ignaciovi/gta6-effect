@@ -184,3 +184,4 @@ footer strong { color: var(--ink-2); }
 .headline { margin: 0 0 2px; font: 600 15px/1.4 var(--sans); color: var(--ink-2); display: flex; gap: 8px; align-items: flex-start; }
 .headline .value { font-size: 30px; line-height: 1; color: var(--ink); margin-right: 6px; vertical-align: -3px; letter-spacing: -.01em; }
 .headline > span { min-width: 0; }
+
