@@ -435,19 +435,7 @@ function renderFood() {
     others: [{ name: "Uber Eats", color: C.cyan, pts: rk("ubereats") }, { name: "Domino's", color: C.orange, pts: rk("dominos") }], invert: true,
     note: `Now: Uber Eats ${now("ubereats") != null ? "#" + now("ubereats") : "outside top 100"}, Domino's ${now("dominos") != null ? "#" + now("dominos") : "outside top 100"}. Climbing ranks = more people installing to order.` }));
 
-  const apps = DATA.appstore?.meta?.apps || {};
-  const rows = Object.entries(apps).map(([k, label]) => {
-    const pts = DATA.appstore.series[k] || [];
-    const cur = pts[pts.length - 1]?.[1] ?? null;
-    const dayAgo = [...pts].reverse().find(p => p[0] <= Date.now() - 20 * HOUR)?.[1] ?? null;
-    let move = "";
-    if (cur != null && dayAgo != null && cur !== dayAgo) move = (cur < dayAgo ? "▲ " : "▼ ") + Math.abs(dayAgo - cur) + " in 24h";
-    return { label, now: cur, row: [label, cur != null ? "#" + cur : "not in top 100", move] };
-  }).sort((a, b) => (a.now ?? 999) - (b.now ?? 999));
-  const c = el("article", { class: "card" }, el("p", { class: "label" }, "US App Store: Top Free rank, all tracked apps"));
-  c.append(rows.length ? list(rows.map(r => r.row)) : el("p", { class: "note" }, "Coming soon"));
-  c.append(el("p", { class: "note" }, "Delivery apps climbing, or the PlayStation app jumping for remote downloads, are tell-tale signs."));
-  sec.append(c);
+  // Full App Store rank list (all tracked apps) is still collected but hidden for now.
 }
 
 
