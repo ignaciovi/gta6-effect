@@ -362,12 +362,14 @@ function renderAttention() {
     name: "% of top-100 videos (avg)", showBaseline: false,
     extra: yt?.meta?.top_gta6_videos?.length ? list(yt.meta.top_gta6_videos.slice(0, 5).map(v => [v.title, "", v.regions.join(" ")])) : null,
     note: [regionRow && `By country: ${regionRow}.`, gaming != null && `Gaming category: ${pct(gaming, 1)}.`].filter(Boolean).join(" ") || null }));
+  sec.append(card({ title: "Steam users online (global)", headline: "{v} people are online on Steam: does PC gaming dip as players switch to consoles?", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
+    note: "If players switch to their PS5 or Xbox, Steam should dip." }));
+  sec.append(card({ title: "GTA V players on Steam", headline: "{v} people are still playing GTA V on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
+    note: "Does the old game empty out?" }));
 }
 
 function renderWork() {
   const sec = $("#sec-work"); sec.replaceChildren();
-  sec.append(card({ title: "Steam users online (global)", headline: "{v} people are online on Steam right now", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
-    note: "If players switch to their PS5 or Xbox, Steam should dip." }));
   sec.append(card({ title: "GitHub pull requests opened / hour", headline: "{v} GitHub pull requests opened in the last hour", pts: series("github", "prs_per_hour"), sense: -1, name: "PRs per hour", step: true, maxAgeH: 4,
     note: "Global developer output. Are devs shipping or playing?" }));
   // Wikipedia edits are still collected (data/wikiedits.json) but hidden from the page.
@@ -376,8 +378,6 @@ function renderWork() {
   const sickDaily = dailyContext(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:daily`))));
   sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "US interest in “call in sick” + “sick day” searches: {v}", pts: sick, context: sickDaily, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
     note: "Google Trends index; relative, not absolute counts. Before the last 7 days Google only gives daily values (faded line)." }));
-  sec.append(card({ title: "GTA V players on Steam", headline: "{v} people are playing GTA V on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
-    note: "Does the old game empty out?" }));
 }
 
 function renderFood() {

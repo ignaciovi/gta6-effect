@@ -92,7 +92,7 @@ h1 { margin: 6px 0 0; padding: 4px 0 6px; line-height: 0; }
   padding: 8px 14px; border-radius: 12px; border: 1px solid var(--hair);
   background: rgba(18,8,31,.78); backdrop-filter: blur(6px);
 }
-.clock-row .meta { margin: 0; }
+.clock-row .meta { margin: 0; flex-basis: 100%; } /* launch date on its own line */
 .clock-value { font: 400 clamp(24px, 6vw, 30px)/1.1 var(--display); white-space: nowrap; letter-spacing: .02em; }
 
 /* ---------- controls ---------- */
