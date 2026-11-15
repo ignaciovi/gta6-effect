@@ -370,7 +370,7 @@ function renderAttention() {
   sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", headline: "{v} of the top 100 Twitch streams are about GTA VI", pts: series("twitch", "global_stream_share"), fmt: v => pct(v, 0),
     name: "% of top 100 live streams", showBaseline: false,
     note: `The 100 most-watched live streams worldwide whose game or title is GTA VI. Actually playing it: ${playing ? pct(playing[1], 0) : "–"}.` }));
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are doing something related to GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are watching something related to GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
     name: "% of top-100 viewers", color: C.cyan, showBaseline: false,
     extra: tw?.meta?.top_gta6_streams_global?.length ? list(tw.meta.top_gta6_streams_global.map(s => [(s.playing ? "🎮 " : "💬 ") + s.user, compact(s.viewers), "viewers"])) : null,
     note: "🎮 playing GTA VI · 💬 mentions it in the title." }));
