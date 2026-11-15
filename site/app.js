@@ -413,12 +413,7 @@ function renderWork() {
   sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "Searches for calling in sick are {v} normal for this time of day", relative: true, pts: sickAll, sense: 1, name: "Searches", color: C.orange, maxAgeH: 4,
     note: "Compared with the same hour on normal days (weekday vs weekday). Google Trends only gives relative interest, not search counts. Older weeks are stitched from overlapping 7-day windows, so their scale is approximate." }));
   // Commuting and internet use (formerly "Roads & wires")
-  sec.append(card({ title: "US freeway congestion (10 metros)", headline: "US freeways are running {v} below free-flow speed", snapshot: true, pts: series("tomtom", "us_avg"), sense: -1, fmt: v => pct(v, 0), floor: 10, name: "Avg slowdown vs free-flow",
-    note: "How far below free-flow speed traffic is moving. Lower = emptier roads.",
-    extra: DATA.tomtom?.meta?.metros ? list(Object.entries(DATA.tomtom.meta.metros).map(([k, city]) => {
-      const pts = series("tomtom", k), p = latest(pts, 3), d = deviation(pts, 3, 10);
-      return [city, p ? pct(p[1], 0) : "–", d != null && Number.isFinite(d) ? `${d >= 0 ? "+" : ""}${(d * 100).toFixed(0)}% vs normal` : ""];
-    })) : null }));
+  // Freeway congestion (TomTom) is still collected (data/tomtom.json) but hidden for now.
   sec.append(card({ title: "US internet traffic (Cloudflare)", headline: "US internet traffic is at {v} of its range since Nov 1", pts: series("radar", "us_netflows"), sense: 1, fmt: v => pct(v * 100, 0), name: "Traffic (normalised)", color: C.cyan, maxAgeH: 6,
     note: "Normalised volume of US network traffic. GTA VI downloads are 100GB+ per console." }));
 }
