@@ -83,7 +83,7 @@ def write(name: str, result: dict):
 # Hourly sources that can look up any past hour: each run fills missing hours
 # (newest first) back to HISTORY_START within a time budget, so history builds
 # up over successive runs and any gaps heal themselves.
-GAP_FILL = {"github": ("prs_per_hour", 60), "wikiedits": ("human_edits_per_hour", 150)}
+GAP_FILL = {"github": ("prs_per_hour", 60)}  # Wikipedia is hidden on the site: no backfill
 
 
 def fill_gaps():

@@ -370,7 +370,7 @@ function renderWork() {
     note: "If players switch to their PS5 or Xbox, Steam should dip." }));
   sec.append(card({ title: "GitHub pull requests opened / hour", headline: "{v} GitHub pull requests opened in the last hour", pts: series("github", "prs_per_hour"), sense: -1, name: "PRs per hour", step: true, maxAgeH: 4,
     note: "Global developer output. Are devs shipping or playing?" }));
-  sec.append(card({ title: "Human edits to English Wikipedia / hour", headline: "{v} human edits to English Wikipedia in the last hour", pts: series("wikiedits", "human_edits_per_hour"), sense: -1, name: "Edits per hour", step: true, color: C.cyan, maxAgeH: 4 }));
+  // Wikipedia edits are still collected (data/wikiedits.json) but hidden from the page.
   const sickTerms = ["call in sick", "sick day"];
   const sick = sumSeries(sickTerms.map(k => series("trends", `sick:${k}`)));
   const sickDaily = dailyContext(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:daily`))));
@@ -445,7 +445,7 @@ function setChartWidth(sec) {
 
 function renderAll() {
   setChartWidth($("#sec-work"));
-  renderAttention(); renderWork(); renderFood(); renderTraffic(); renderMarket();
+  renderWork(); renderAttention(); renderFood(); renderTraffic(); renderMarket();
   const gen = DATA.meta?.generated;
   $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
   const st = DATA.status || {};
