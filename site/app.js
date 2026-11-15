@@ -425,14 +425,7 @@ function renderFood() {
   sec.append(card({ headline: "Searches for food are {v} normal for this time of day", relative: true, title: "US ordering-intent searches", pts: foodAll, sense: 1, name: "Searches", color: C.orange, maxAgeH: 4,
     note: `Google Trends for ${terms.map(t => `\u201c${t}\u201d`).join(", ")}: what people type when they're about to order. Compared with the same hour on normal days; Google gives relative interest only, not counts.` }));
 
-  // Delivery apps' US App Store rank over time (#1 at the top; gaps = outside the top 100)
-  const rk = k => series("appstore", k);
-  const now = k => latest(rk(k), 6)?.[1];
-  const dd = now("doordash");
-  sec.append(card({ headline: dd != null ? "DoorDash is {v} in the US App Store (free)" : undefined, title: "Delivery apps in the US App Store top 100",
-    pts: rk("doordash"), fmt: v => "#" + Math.round(v), showBaseline: false, maxAgeH: 6, step: true, name: "DoorDash", color: C.pink,
-    others: [{ name: "Uber Eats", color: C.cyan, pts: rk("ubereats") }, { name: "Domino's", color: C.orange, pts: rk("dominos") }], invert: true,
-    note: `Now: Uber Eats ${now("ubereats") != null ? "#" + now("ubereats") : "outside top 100"}, Domino's ${now("dominos") != null ? "#" + now("dominos") : "outside top 100"}. Climbing ranks = more people installing to order.` }));
+  // Delivery-app App Store ranks (data/appstore.json) are still collected but hidden for now.
 
   // Full App Store rank list (all tracked apps) is still collected but hidden for now.
 }
