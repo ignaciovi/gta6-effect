@@ -1,0 +1,68 @@
+{
+ "steam": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:02:30Z",
+  "error": null,
+  "last_run": "2026-11-15T16:02:30Z"
+ },
+ "trends": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:13Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:13Z"
+ },
+ "appstore": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:45Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:45Z"
+ },
+ "trending": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:08:57Z",
+  "error": null,
+  "last_run": "2026-11-15T16:08:57Z"
+ },
+ "twitch": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:46Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:46Z"
+ },
+ "youtube": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:08:55Z",
+  "error": null,
+  "last_run": "2026-11-15T16:08:55Z"
+ },
+ "stocks": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:49Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:49Z"
+ },
+ "tomtom": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:48Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:48Z"
+ },
+ "radar": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:49Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:49Z"
+ },
+ "github": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:02:51Z",
+  "error": null,
+  "last_run": "2026-11-15T16:02:51Z"
+ },
+ "wikiedits": {
+  "state": "ok",
+  "last_ok": "2026-11-15T16:04:07Z",
+  "error": null,
+  "last_run": "2026-11-15T16:04:07Z"
+ }
+}
