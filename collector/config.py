@@ -8,6 +8,10 @@ LAUNCH_ISO = "2026-11-19T05:00:00Z"
 
 # Keep at most this many days of history per series.
 RETENTION_DAYS = 180
+
+# Backfill history from here where sources allow it.
+HISTORY_START_ISO = "2026-11-01T00:00:00Z"
+HISTORY_START_S = 1793491200  # same instant, as a unix timestamp
 # Points older than this are thinned to one per hour (keeps sub-hourly series,
 # e.g. Steam's ~5-min chart, small while preserving full detail for the last week).
 FULL_RES_DAYS = 7

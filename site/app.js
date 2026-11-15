@@ -90,12 +90,27 @@ function inRange(pts, sessions) {
   return pts.filter(p => days.includes(ET_DATE.format(p[0])));
 }
 
+// Google returns daily values for long windows, normalised differently from the
+// hourly week. Scale them onto the hourly series using days covered by both, and
+// keep only days before the hourly data starts. Drawn as faded context.
+function dailyContext(hourly, daily) {
+  if (!hourly.length || !daily.length) return [];
+  const dayKey = t => Math.floor(t / DAY);
+  const byDay = new Map();
+  for (const [t, v] of hourly) { const k = dayKey(t), b = byDay.get(k) || [0, 0]; b[0] += v; b[1]++; byDay.set(k, b); }
+  const ratios = daily.map(([t, v]) => { const b = byDay.get(dayKey(t)); return b && b[1] >= 20 && v ? (b[0] / b[1]) / v : null; }).filter(r => r != null);
+  if (!ratios.length) return [];
+  const k = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+  return daily.filter(([t]) => t + DAY <= hourly[0][0]).map(([t, v]) => [t + DAY / 2, Math.round(v * k * 10) / 10]);
+}
+
 // ---------- chart ----------
-function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = compact, step = false, sessions = false }) {
+function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = compact, step = false, sessions = false, context = [] }) {
   const W = Math.max(260, Math.round(CHART_W)), H = 150, M = { l: 44, r: 10, t: 10, b: 22 };
   const now = Date.now();
   let x0 = rangeStart();
   const pts = inRange(main, sessions);
+  const ctx = sessions ? [] : context.filter(p => p[0] >= rangeStart());
   const svg = svgEl("svg", { class: "chart", viewBox: `0 0 ${W} ${H}`, tabindex: "0", role: "img", "aria-label": `${name}, ${RANGE_DAYS ? RANGE_DAYS + " day" : "all-time"} chart` });
   if (pts.length < 2) {
     const t = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }); t.textContent = "Collecting data: next point within 30 min"; svg.append(t);
@@ -104,12 +119,13 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
   // Short history (e.g. a snapshot metric tracked for a few hours): zoom the x-axis to
   // the data instead of squeezing it into the right edge of a multi-day axis.
   // "All time" always fits the data; a fixed range zooms (with a note) only when history is shorter.
-  const fit = !sessions && pts[0][0] > x0 + 2 * HOUR;
+  const first = Math.min(pts[0][0], ctx.length ? ctx[0][0] : Infinity);
+  const fit = !sessions && first > x0 + 2 * HOUR;
   const zoomed = fit && RANGE_DAYS > 0;
-  if (fit) x0 = pts[0][0] - Math.max(HOUR / 2, (now - pts[0][0]) * 0.04);
+  if (fit) x0 = first - Math.max(HOUR / 2, (now - first) * 0.04);
   const bf = baselineFn(main);
   const base = showBaseline ? pts.map(([t]) => [t, bf(t)]).filter(p => p[1] != null) : [];
-  const ys = pts.map(p => p[1]).concat(base.map(p => p[1]));
+  const ys = pts.map(p => p[1]).concat(base.map(p => p[1]), ctx.map(p => p[1]));
   let lo = Math.min(...ys), hi = Math.max(...ys);
   const pad = (hi - lo) * 0.1 || Math.abs(hi) * 0.1 || 1; lo -= pad; hi += pad;
   if (lo < 0 && Math.min(...ys) >= 0) lo = 0;
@@ -168,12 +184,13 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
     svg.append(svgEl("line", { x1: lx, x2: lx, y1: M.t, y2: H - M.b, stroke: C.orange, "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }));
     const t = svgEl("text", { x: lx + 4, y: M.t + 10 }); t.textContent = "Launch"; t.style.fill = C.orange; svg.append(t);
   }
-  const path = (arr) => arr.map(([t, v], i) => {
+  const path = (arr, joinGaps = false) => arr.map(([t, v], i) => {
     const prev = arr[i - 1];
-    if (!i || (!sessions && t - prev[0] > 4 * HOUR)) return `M${X(t).toFixed(1)},${Y(v).toFixed(1)}`;
+    if (!i || (!sessions && !joinGaps && t - prev[0] > 4 * HOUR)) return `M${X(t).toFixed(1)},${Y(v).toFixed(1)}`;
     return step ? `H${X(t).toFixed(1)}V${Y(v).toFixed(1)}` : `L${X(t).toFixed(1)},${Y(v).toFixed(1)}`;
   }).join("");
   const common = { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke" };
+  if (ctx.length) svg.append(svgEl("path", { ...common, d: path([...ctx, pts[0]], true), stroke: color, "stroke-width": 2, opacity: .4 }));
   if (base.length) svg.append(svgEl("path", { ...common, d: path(base), stroke: C.base, "stroke-width": 1.5, opacity: .9 }));
   svg.append(svgEl("path", { ...common, d: path(pts), stroke: color, "stroke-width": 2 }));
   const last = pts[pts.length - 1];
@@ -253,10 +270,12 @@ function logo(name) {
   return s;
 }
 
-function card({ icon, title, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false }) {
+function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [] }) {
   const c = el("article", { class: "card" + (wide ? " wide" : "") });
-  c.append(el("p", { class: "label" + (icon ? " with-logo" : "") }, icon ? logo(icon) : null, title));
   const p = pts && latest(pts, maxAgeH);
+  // Sentence headline ("{v} of the top 100 … are about GTA VI") when there's a value; small label otherwise.
+  const useHeadline = headline && p;
+  if (!useHeadline) c.append(el("p", { class: "label" + (icon ? " with-logo" : "") }, icon ? logo(icon) : null, title));
   if (!p && !extra) {
     c.classList.add("pending");
     c.append(el("div", { class: "stat-row" }, el("span", { class: "value" }, pts?.length ? "Data is stale" : "Coming soon")));
@@ -264,7 +283,16 @@ function card({ icon, title, pts, fmt = compact, sense = 1, note, wide, chart = 
     return c;
   }
   if (p) {
-    const row = el("div", { class: "stat-row" }, el("span", { class: "value" }, valueText ?? fmt(p[1])));
+    const valueEl = el("span", { class: "value" }, valueText ?? fmt(p[1]));
+    let row;
+    if (useHeadline) {
+      const [before, after] = headline.split("{v}");
+      c.append(el("h3", { class: "headline" + (icon ? " with-logo" : "") }, icon ? logo(icon) : null,
+        el("span", {}, before || null, valueEl, after || null)));
+      row = el("div", { class: "stat-row" });
+    } else {
+      row = el("div", { class: "stat-row" }, valueEl);
+    }
     const dev = showBaseline ? deviation(pts, maxAgeH, floor) : null;
     if (dev != null && Number.isFinite(dev)) {
       const up = dev >= 0, slack = (up ? 1 : -1) * sense > 0;
@@ -272,15 +300,16 @@ function card({ icon, title, pts, fmt = compact, sense = 1, note, wide, chart = 
         el("span", { class: "arrow", "aria-hidden": "true" }, up ? "▲" : "▼"),
         `${Math.abs(dev * 100).toFixed(Math.abs(dev) < 0.1 ? 1 : 0)}% vs normal`));
     }
-    c.append(row);
+    if (row.childNodes.length) c.append(row);
     if (chart) {
-      const chartEl = lineChart({ main: pts, name: name || title, color, yFmt: fmt, step, showBaseline, sessions });
+      const chartEl = lineChart({ main: pts, name: name || title, color, yFmt: fmt, step, showBaseline, sessions, context });
       if (chartEl.dataset.zoomNote) c.append(el("p", { class: "zoom-note" }, chartEl.dataset.zoomNote));
       c.append(chartEl);
       const lg = el("div", { class: "legend" });
       const key = (col, label) => { const i = el("i"); i.style.background = col; lg.append(el("span", {}, i, label)); };
       key(color || C.pink, name || "Now");
       if (showBaseline) key(C.base, "Normal for that hour");
+      if (context.length && context[0][0] >= rangeStart()) { const i = el("i"); i.style.background = color || C.pink; i.style.opacity = .4; lg.append(el("span", {}, i, "Daily (earlier)")); }
       c.append(lg, dataTable(inRange(pts, sessions), fmt));
     }
   }
@@ -303,10 +332,10 @@ function renderAttention() {
   const sec = $("#sec-attention"); sec.replaceChildren();
   const tw = DATA.twitch, yt = DATA.youtube, tr = DATA.trending;
   const playing = latest(series("twitch", "global_playing_share"), 8);
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", pts: series("twitch", "global_stream_share"), fmt: v => pct(v, 0),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", headline: "{v} of the top 100 Twitch streams are about GTA VI", pts: series("twitch", "global_stream_share"), fmt: v => pct(v, 0),
     name: "% of top 100 live streams", showBaseline: false,
     note: `The 100 most-watched live streams worldwide whose game or title is GTA VI. Actually playing it: ${playing ? pct(playing[1], 0) : "–"}.` }));
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are watching GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
     name: "% of top-100 viewers", color: C.cyan, showBaseline: false,
     extra: tw?.meta?.top_gta6_streams_global?.length ? list(tw.meta.top_gta6_streams_global.map(s => [(s.playing ? "🎮 " : "💬 ") + s.user, compact(s.viewers), "viewers"])) : null,
     note: "🎮 playing GTA VI · 💬 mentions it in the title." }));
@@ -314,13 +343,13 @@ function renderAttention() {
   // Reconstructed from past broadcasts: its own chart, never spliced into the live metric.
   const vod = DATA.twitch_vod, liveN = new Map(series("twitch_vod", "panel_live").map(([t, n]) => [t, n]));
   const est = series("twitch_vod", "panel_gta_share").filter(([t]) => (liveN.get(t) || 0) >= 100);
-  if (est.length) sec.append(card({ title: "Big streamers mentioning GTA VI (estimated, last 7 days)", pts: est, fmt: v => pct(v, 1),
+  if (est.length) sec.append(card({ headline: "An estimated {v} of big streamers mentioned GTA VI in the last hour tracked", title: "Big streamers mentioning GTA VI (estimated, last 7 days)", pts: est, fmt: v => pct(v, 1),
     name: "% of live panel channels (estimate)", color: C.cyan, showBaseline: false, maxAgeH: 48,
     note: `Reconstructed from past broadcasts of ${vod.meta.panel_size} big channels: the share of those live each hour whose broadcast title mentions GTA VI. An estimate with a fixed panel, one title per broadcast and no viewer weighting, so it reads lower than the live top-100 card. Use it for the trend, not the level.` }));
 
   const slots = tr?.meta?.slots || 100, nowHits = latest(series("trending", "world_gta6_items"), 8)?.[1];
   const items = tr?.meta?.gta6_items || [];
-  sec.append(card({ icon: "google", snapshot: true, title: "GTA VI in Google Trending Now (10 countries)", pts: series("trending", "world_slot_share"), fmt: v => pct(v, 0),
+  sec.append(card({ icon: "google", snapshot: true, title: "GTA VI in Google Trending Now (10 countries)", headline: "{v} trending Google searches in 10 countries are about GTA VI", pts: series("trending", "world_slot_share"), fmt: v => pct(v, 0),
     name: "% of trending slots", color: C.orange, showBaseline: false, step: true,
     valueText: nowHits != null ? `${nowHits} of ${slots}` : undefined,
     extra: items.length ? list(items.slice(0, 6).map(i => ["🎮 " + i.title, compact(i.traffic) + "+", i.geo])) : (tr ? el("p", { class: "note" }, "No GTA VI searches in any country's top 10 right now.") : null),
@@ -329,7 +358,7 @@ function renderAttention() {
   const per = yt?.meta?.per_region || {};
   const regionRow = Object.entries(per).sort((a, b) => b[1] - a[1]).map(([r, v]) => `${r} ${v.toFixed(0)}%`).join(" · ");
   const gaming = latest(series("youtube", "world_gaming_share"), 8)?.[1];
-  sec.append(card({ icon: "youtube", snapshot: true, title: "Most-popular YouTube videos about GTA VI (10 countries)", pts: series("youtube", "world_top100_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "youtube", snapshot: true, title: "Most-popular YouTube videos about GTA VI (10 countries)", headline: "{v} of the most-popular YouTube videos are about GTA VI", pts: series("youtube", "world_top100_share"), fmt: v => pct(v, 1),
     name: "% of top-100 videos (avg)", showBaseline: false,
     extra: yt?.meta?.top_gta6_videos?.length ? list(yt.meta.top_gta6_videos.slice(0, 5).map(v => [v.title, "", v.regions.join(" ")])) : null,
     note: [regionRow && `By country: ${regionRow}.`, gaming != null && `Gaming category: ${pct(gaming, 1)}.`].filter(Boolean).join(" ") || null }));
@@ -337,15 +366,17 @@ function renderAttention() {
 
 function renderWork() {
   const sec = $("#sec-work"); sec.replaceChildren();
-  sec.append(card({ title: "Steam users online (global)", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
+  sec.append(card({ title: "Steam users online (global)", headline: "{v} people are online on Steam right now", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
     note: "If players switch to their PS5 or Xbox, Steam should dip." }));
-  sec.append(card({ title: "GitHub pull requests opened / hour", pts: series("github", "prs_per_hour"), sense: -1, name: "PRs per hour", step: true, maxAgeH: 4,
+  sec.append(card({ title: "GitHub pull requests opened / hour", headline: "{v} GitHub pull requests opened in the last hour", pts: series("github", "prs_per_hour"), sense: -1, name: "PRs per hour", step: true, maxAgeH: 4,
     note: "Global developer output. Are devs shipping or playing?" }));
-  sec.append(card({ title: "Human edits to English Wikipedia / hour", pts: series("wikiedits", "human_edits_per_hour"), sense: -1, name: "Edits per hour", step: true, color: C.cyan, maxAgeH: 4 }));
-  const sick = sumSeries(["call in sick", "sick day"].map(k => series("trends", `sick:${k}`)));
-  sec.append(card({ title: "US searches: “call in sick” + “sick day”", pts: sick, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
-    note: "Google Trends index; relative, not absolute counts." }));
-  sec.append(card({ title: "GTA V players on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
+  sec.append(card({ title: "Human edits to English Wikipedia / hour", headline: "{v} human edits to English Wikipedia in the last hour", pts: series("wikiedits", "human_edits_per_hour"), sense: -1, name: "Edits per hour", step: true, color: C.cyan, maxAgeH: 4 }));
+  const sickTerms = ["call in sick", "sick day"];
+  const sick = sumSeries(sickTerms.map(k => series("trends", `sick:${k}`)));
+  const sickDaily = dailyContext(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:daily`))));
+  sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "US interest in “call in sick” + “sick day” searches: {v}", pts: sick, context: sickDaily, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
+    note: "Google Trends index; relative, not absolute counts. Before the last 7 days Google only gives daily values (faded line)." }));
+  sec.append(card({ title: "GTA V players on Steam", headline: "{v} people are playing GTA V on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
     note: "Does the old game empty out?" }));
 }
 
@@ -353,7 +384,8 @@ function renderFood() {
   const sec = $("#sec-food"); sec.replaceChildren();
   const terms = DATA.trends?.meta?.batches?.food || ["DoorDash", "Uber Eats", "pizza delivery", "Domino's"];
   const food = sumSeries(terms.map(k => series("trends", `food:${k}`)));
-  sec.append(card({ title: "US delivery searches (DoorDash, Uber Eats, pizza, Domino's)", pts: food, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4, wide: false }));
+  const foodDaily = dailyContext(food, sumSeries(terms.map(k => series("trends", `food:${k}:daily`))));
+  sec.append(card({ headline: "US interest in food-delivery searches: {v}", title: "US delivery searches (DoorDash, Uber Eats, pizza, Domino's)", pts: food, context: foodDaily, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4, wide: false }));
   const apps = DATA.appstore?.meta?.apps || {};
   const rows = Object.entries(apps).map(([k, label]) => {
     const pts = DATA.appstore.series[k] || [];
@@ -371,13 +403,13 @@ function renderFood() {
 
 function renderTraffic() {
   const sec = $("#sec-traffic"); sec.replaceChildren();
-  sec.append(card({ title: "US freeway congestion (10 metros)", snapshot: true, pts: series("tomtom", "us_avg"), sense: -1, fmt: v => pct(v, 0), floor: 10, name: "Avg slowdown vs free-flow",
+  sec.append(card({ title: "US freeway congestion (10 metros)", headline: "US freeways are running {v} below free-flow speed", snapshot: true, pts: series("tomtom", "us_avg"), sense: -1, fmt: v => pct(v, 0), floor: 10, name: "Avg slowdown vs free-flow",
     note: "How far below free-flow speed traffic is moving. Lower = emptier roads.",
     extra: DATA.tomtom?.meta?.metros ? list(Object.entries(DATA.tomtom.meta.metros).map(([k, city]) => {
       const pts = series("tomtom", k), p = latest(pts, 3), d = deviation(pts, 3, 10);
       return [city, p ? pct(p[1], 0) : "–", d != null && Number.isFinite(d) ? `${d >= 0 ? "+" : ""}${(d * 100).toFixed(0)}% vs normal` : ""];
     })) : null }));
-  sec.append(card({ title: "US internet traffic (Cloudflare)", pts: series("radar", "us_netflows"), sense: 1, fmt: v => v.toFixed(2), name: "Traffic (normalised)", color: C.cyan, maxAgeH: 6,
+  sec.append(card({ title: "US internet traffic (Cloudflare)", headline: "US internet traffic is at {v} of its range since Nov 1", pts: series("radar", "us_netflows"), sense: 1, fmt: v => pct(v * 100, 0), name: "Traffic (normalised)", color: C.cyan, maxAgeH: 6,
     note: "Normalised volume of US network traffic. GTA VI downloads are 100GB+ per console." }));
 }
 
@@ -390,7 +422,7 @@ function renderMarket() {
   ];
   for (const [sym, title, color, blurb] of stocks) {
     const d = latest(series("stocks", `${sym}:pct`), 96)?.[1];
-    sec.append(card({ title, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
+    sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
       extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: blurb }));
   }
 }

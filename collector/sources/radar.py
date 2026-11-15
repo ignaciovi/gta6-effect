@@ -1,8 +1,10 @@
-"""US internet traffic (Cloudflare Radar netflows), hourly, last 14 days.
+"""US internet traffic (Cloudflare Radar netflows), hourly since HISTORY_START.
 Normalised by Cloudflare per request, so the window is replaced every run."""
+import time
 from datetime import datetime
 
 from common import session, env, Skip
+from config import HISTORY_START_ISO
 
 
 def fetch():
@@ -10,7 +12,8 @@ def fetch():
     if not tok:
         raise Skip("CLOUDFLARE_RADAR_TOKEN not set")
     r = session.get("https://api.cloudflare.com/client/v4/radar/netflows/timeseries",
-                    params={"location": "US", "dateRange": "14d", "aggInterval": "1h",
+                    params={"location": "US", "dateStart": HISTORY_START_ISO,
+                            "dateEnd": time.strftime("%Y-%m-%dT%H:00:00Z", time.gmtime()), "aggInterval": "1h",
                             "normalization": "MIN0_MAX", "format": "json"},
                     headers={"Authorization": f"Bearer {tok}"}, timeout=30)
     r.raise_for_status()

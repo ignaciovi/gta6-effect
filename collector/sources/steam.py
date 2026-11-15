@@ -1,6 +1,6 @@
 """Steam concurrent users (Valve's public 48h chart) + GTA V players."""
 from common import session, now_ms
-from config import GTAV_STEAM_APPID
+from config import GTAV_STEAM_APPID, HISTORY_START_S
 
 
 def fetch():
@@ -24,7 +24,7 @@ def fetch():
         r = session.get(f"https://steamcharts.com/app/{GTAV_STEAM_APPID}/chart-data.json",
                         headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
         r.raise_for_status()
-        cutoff = now_ms() - 8 * 86400 * 1000
+        cutoff = HISTORY_START_S * 1000
         series["gtav_players"] = [[int(t), int(v)] for t, v in r.json() if t >= cutoff] + series["gtav_players"]
     except Exception:
         pass

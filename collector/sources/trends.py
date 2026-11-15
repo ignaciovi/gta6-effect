@@ -11,11 +11,12 @@ import time
 from pathlib import Path
 
 from common import session, Fresh
-from config import TRENDS_BATCHES
+from config import HISTORY_START_ISO, TRENDS_BATCHES
 
 BASE = "https://trends.google.com"
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "trends.json"
 MIN_INTERVAL_S = 55 * 60
+DAILY_INTERVAL_S = 6 * 3600  # daily series since HISTORY_START: refresh every 6h
 
 
 def _json(text):
@@ -43,6 +44,10 @@ def _series(terms, geo="US", timeframe="now 7-d"):
 
 def fetch():
     try:
+        daily_updated = json.loads(DATA_FILE.read_text()).get("meta", {}).get("daily_updated", 0)
+    except (FileNotFoundError, ValueError):
+        daily_updated = 0
+    try:
         updated = json.loads(DATA_FILE.read_text()).get("updated")
         if updated and time.time() - time.mktime(time.strptime(updated, "%Y-%m-%dT%H:%M:%SZ")) + time.timezone < MIN_INTERVAL_S:
             raise Fresh("fetched within the last hour")
@@ -55,4 +60,13 @@ def fetch():
             time.sleep(5)
         for term, pts in _series(terms).items():
             series[f"{batch}:{term}"] = pts
-    return {"mode": "replace", "series": series, "meta": {"batches": TRENDS_BATCHES}}
+    meta = {"batches": TRENDS_BATCHES}
+    # Longer windows only come back at daily resolution (separately normalised by Google).
+    if time.time() - daily_updated > DAILY_INTERVAL_S:
+        window = f"{HISTORY_START_ISO[:10]} {time.strftime('%Y-%m-%d', time.gmtime())}"
+        for batch, terms in TRENDS_BATCHES.items():
+            time.sleep(5)
+            for term, pts in _series(terms, timeframe=window).items():
+                series[f"{batch}:{term}:daily"] = pts
+        meta["daily_updated"] = int(time.time())
+    return {"mode": "replace", "series": series, "meta": meta}

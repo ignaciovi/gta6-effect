@@ -1,7 +1,7 @@
 """Stock prices from Yahoo Finance's public chart endpoint (no key).
 30-minute bars over the last 5 trading days, plus today's % change."""
 from common import session
-from config import TICKERS
+from config import HISTORY_START_S, TICKERS
 
 API = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
 HEADERS = {"User-Agent": "Mozilla/5.0"}  # Yahoo rejects non-browser user agents
@@ -17,10 +17,11 @@ def _chart(sym, rng, interval):
 def fetch():
     series, meta = {}, {}
     for sym in TICKERS:
-        bars = _chart(sym, "5d", "30m")
+        bars = _chart(sym, "1mo", "30m")  # Yahoo keeps 60 days of 30-min bars
         closes = bars["indicators"]["quote"][0]["close"]
         series[f"{sym}:price"] = [[int(t) * 1000, round(c, 2)]
-                                  for t, c in zip(bars["timestamp"], closes) if c is not None]
+                                  for t, c in zip(bars["timestamp"], closes)
+                                  if c is not None and t >= HISTORY_START_S]
         today = _chart(sym, "1d", "5m")["meta"]  # chartPreviousClose = yesterday's close
         price, prev = today["regularMarketPrice"], today["chartPreviousClose"]
         ts = int(today["regularMarketTime"]) * 1000

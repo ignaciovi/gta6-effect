@@ -27,7 +27,7 @@ if _env.exists():
                 os.environ.setdefault(_k.strip(), _v.strip())
 
 from common import Fresh, Skip, iso  # noqa: E402
-from config import FULL_RES_DAYS, LAUNCH_ISO, RETENTION_DAYS  # noqa: E402
+from config import FULL_RES_DAYS, HISTORY_START_S, LAUNCH_ISO, RETENTION_DAYS  # noqa: E402
 
 SOURCES = [
     "steam", "github", "wikiedits", "trends", "trending", "appstore",
@@ -80,6 +80,35 @@ def write(name: str, result: dict):
     path.write_text(json.dumps(doc, separators=(",", ":")))
 
 
+# Hourly sources that can look up any past hour: each run fills missing hours
+# (newest first) back to HISTORY_START within a time budget, so history builds
+# up over successive runs and any gaps heal themselves.
+GAP_FILL = {"github": ("prs_per_hour", 60), "wikiedits": ("human_edits_per_hour", 150)}
+
+
+def fill_gaps():
+    for name, (key, budget) in GAP_FILL.items():
+        have = {t // 3_600_000 * 3600 for t, _ in load(DATA_DIR / f"{name}.json").get("series", {}).get(key, [])}
+        last_full = int(time.time() // 3600 * 3600) - 3 * 3600  # recent hours come from the normal fetch
+        missing = [h for h in range(last_full, HISTORY_START_S - 1, -3600) if h not in have]
+        if not missing:
+            continue
+        mod = importlib.import_module(f"sources.{name}")
+        t0, done = time.time(), 0
+        for h in missing:
+            if time.time() - t0 > budget:
+                break
+            try:
+                write(name, mod.fetch(hours=1, end_s=h + 3600))
+                done += 1
+            except Exception as e:
+                print(f"[gap]  {name} {iso(h)}: {e}")
+                break
+            if name == "github":
+                time.sleep(2.1)  # search API: 30 requests/min
+        print(f"[gap]  {name}: filled {done} of {len(missing)} missing hours")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="print, don't write")
@@ -117,6 +146,9 @@ def main():
             traceback.print_exc(limit=2)
         entry["last_run"] = iso(time.time())
         status[name] = entry
+
+    if not args.dry_run and not args.only:
+        fill_gaps()
 
     if not args.dry_run:
         (DATA_DIR / "status.json").write_text(json.dumps(status, indent=1))
