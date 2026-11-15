@@ -227,9 +227,8 @@ h2 { flex-wrap: wrap; }
 main h2 {
   color: #fff0f7;
   text-shadow:
-    0 0 2px #fff,
-    0 0 8px #ff4fa3,
-    0 0 18px #ff4fa3,
-    0 0 36px rgba(255,79,163,.65),
-    0 0 60px rgba(255,79,163,.35);
+    0 0 1px rgba(255,255,255,.6),
+    0 0 6px rgba(255,79,163,.6),
+    0 0 16px rgba(255,79,163,.35),
+    0 0 30px rgba(255,79,163,.18);
 }

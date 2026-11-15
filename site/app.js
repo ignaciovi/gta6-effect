@@ -446,9 +446,8 @@ function cashFigure(sym) {
   const box = el("div", { class: "cash" }, num,
     el("span", { class: "cash-label" }, `market value ${launched ? "since launch" : "since Nov 1st"}`));
   if (!cashAnimated.has(sym)) {
-    cashAnimated.add(sym);
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) num.textContent = fmtCash(delta);
-    else {
+    const roll = () => {
+      cashAnimated.add(sym);
       const t0 = performance.now(), dur = 1800;
       const tick = now => {
         const k = Math.min(1, (now - t0) / dur);
@@ -456,7 +455,15 @@ function cashFigure(sym) {
         if (k < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-    }
+    };
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { cashAnimated.add(sym); num.textContent = fmtCash(delta); }
+    else if ("IntersectionObserver" in window) {
+      // roll up when this figure scrolls into view (once per page load)
+      const io = new IntersectionObserver(entries => {
+        if (entries.some(e => e.isIntersecting)) { io.disconnect(); roll(); }
+      }, { threshold: 0.6 });
+      io.observe(num);
+    } else roll();
   }
   return box;
 }
