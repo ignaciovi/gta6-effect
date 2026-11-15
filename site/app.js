@@ -123,7 +123,7 @@ function stitchEarly(hourly, early) {
 }
 
 // ---------- chart ----------
-function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = compact, step = false, sessions = false, context = [], others = [], invert = false }) {
+function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = compact, step = false, sessions = false, context = [], others = [], invert = false, relative = false }) {
   const W = Math.max(260, Math.round(CHART_W)), H = 150, M = { l: 44, r: 10, t: 10, b: 22 };
   const now = Date.now();
   let x0 = rangeStart();
@@ -160,6 +160,7 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
   const seenTicks = new Set();
   for (let i = 0; i <= 2; i++) {
     const v = lo + (hi - lo) * i / 2, y = Y(v);
+    if (relative) { svg.append(svgEl("line", { x1: M.l, x2: W - M.r, y1: y, y2: y, stroke: C.grid, "stroke-width": 1, "vector-effect": "non-scaling-stroke" })); continue; }
     if (seenTicks.has(yFmt(v))) continue; // tiny ranges would repeat labels
     seenTicks.add(yFmt(v));
     svg.append(svgEl("line", { x1: M.l, x2: W - M.r, y1: y, y2: y, stroke: C.grid, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }));
@@ -233,13 +234,15 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
     dot.setAttribute("cx", X(t)); dot.setAttribute("cy", Y(v)); dot.setAttribute("visibility", "visible");
     tip.replaceChildren(el("div", { class: "t" }, fmtTime(t)));
     const row = (c, val, label) => { const i = el("i"); i.style.background = c; tip.append(el("div", { class: "r" }, i, el("b", {}, val), el("span", {}, label))); };
-    row(color, yFmt(v), name);
+    const bNow = showBaseline ? bf(t) : null;
+    const relTxt = bNow ? `${v >= bNow ? "+" : "−"}${Math.abs((v / bNow - 1) * 100).toFixed(0)}% vs normal` : "–";
+    row(color, relative ? relTxt : yFmt(v), name);
     for (const o of oth) {
       const q = o.pts.reduce((best, p) => (Math.abs(p[0] - t) < Math.abs((best?.[0] ?? Infinity) - t) ? p : best), null);
       if (q && Math.abs(q[0] - t) < HOUR) row(o.color, yFmt(q[1]), o.name);
     }
     const b = showBaseline ? bf(t) : null;
-    if (b != null) row(C.base, yFmt(b), "normal for this hour");
+    if (b != null && !relative) row(C.base, yFmt(b), "normal for this hour");
     tip.hidden = false;
     const r = svg.getBoundingClientRect();
     const cx = clientX ?? r.left + X(t) / W * r.width, cy = clientY ?? r.top;
@@ -294,7 +297,7 @@ function logo(name) {
   return s;
 }
 
-function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false }) {
+function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false }) {
   const c = el("article", { class: "card" + (wide ? " wide" : "") });
   const p = pts && latest(pts, maxAgeH);
   // Sentence headline ("{v} of the top 100 … are about GTA VI") when there's a value; small label otherwise.
@@ -307,17 +310,22 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
     return c;
   }
   if (p) {
-    const valueEl = el("span", { class: "value" }, valueText ?? fmt(p[1]));
+    const relDev = relative ? deviation(pts, maxAgeH, floor) : null;
+    const relOk = relDev != null && Number.isFinite(relDev);
+    const relText = relOk ? `${Math.abs(relDev * 100).toFixed(0)}%` : "–";
+    const relDir = relOk ? (relDev >= 0 ? "above" : "below") : "vs";
+    const valueEl = el("span", { class: "value" }, relative ? relText : (valueText ?? fmt(p[1])));
     let row;
     if (useHeadline) {
-      const [before, after] = headline.split("{v}");
+      let [before, after] = headline.split("{v}");
+      if (relative) after = ` ${relDir}${after}`;
       c.append(el("h3", { class: "headline" + (icon ? " with-logo" : "") }, icon ? logo(icon) : null,
         el("span", {}, before || null, valueEl, after || null)));
       row = el("div", { class: "stat-row" });
     } else {
       row = el("div", { class: "stat-row" }, valueEl);
     }
-    const dev = showBaseline ? deviation(pts, maxAgeH, floor) : null;
+    const dev = showBaseline && !relative ? deviation(pts, maxAgeH, floor) : null;
     if (dev != null && Number.isFinite(dev)) {
       const up = dev >= 0, slack = (up ? 1 : -1) * sense > 0;
       row.append(el("span", { class: "delta " + (slack ? "slack" : "work") },
@@ -326,7 +334,7 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
     }
     if (row.childNodes.length) c.append(row);
     if (chart) {
-      const chartEl = lineChart({ main: pts, name: name || title, color, yFmt: fmt, step, showBaseline, sessions, context, others, invert });
+      const chartEl = lineChart({ main: pts, name: name || title, color, yFmt: fmt, step, showBaseline, sessions, context, others, invert, relative });
       if (chartEl.dataset.zoomNote) c.append(el("p", { class: "zoom-note" }, chartEl.dataset.zoomNote));
       c.append(chartEl);
       const lg = el("div", { class: "legend" });
@@ -335,7 +343,8 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
       for (const o of others) key(o.color, o.name);
       if (showBaseline) key(C.base, "Normal for that hour");
       if (context.length && context[0][0] >= rangeStart()) { const i = el("i"); i.style.background = color || C.pink; i.style.opacity = .4; lg.append(el("span", {}, i, "Daily (earlier)")); }
-      c.append(lg, dataTable(inRange(pts, sessions), fmt));
+      c.append(lg);
+      if (!relative) c.append(dataTable(inRange(pts, sessions), fmt));
     }
   }
   if (extra) c.append(extra);
@@ -401,8 +410,8 @@ function renderWork() {
   const sickTerms = ["call in sick", "sick day"];
   const sick = sumSeries(sickTerms.map(k => series("trends", `sick:${k}`)));
   const sickAll = stitchEarly(sick, sumSeries(sickTerms.map(k => series("trends", `sick:${k}:early`))));
-  sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "US interest in “call in sick” + “sick day” searches: {v}", pts: sickAll, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
-    note: "Google Trends index; relative, not absolute counts. Older weeks are stitched from overlapping 7-day windows, so their scale is approximate." }));
+  sec.append(card({ title: "US searches: “call in sick” + “sick day”", headline: "Searches for calling in sick are {v} normal for this time of day", relative: true, pts: sickAll, sense: 1, name: "Searches", color: C.orange, maxAgeH: 4,
+    note: "Compared with the same hour on normal days (weekday vs weekday). Google Trends only gives relative interest, not search counts. Older weeks are stitched from overlapping 7-day windows, so their scale is approximate." }));
   // Commuting and internet use (formerly "Roads & wires")
   sec.append(card({ title: "US freeway congestion (10 metros)", headline: "US freeways are running {v} below free-flow speed", snapshot: true, pts: series("tomtom", "us_avg"), sense: -1, fmt: v => pct(v, 0), floor: 10, name: "Avg slowdown vs free-flow",
     note: "How far below free-flow speed traffic is moving. Lower = emptier roads.",
@@ -419,8 +428,8 @@ function renderFood() {
   const terms = DATA.trends?.meta?.batches?.food || ["food near me", "pizza near me", "delivery near me"];
   const food = sumSeries(terms.map(k => series("trends", `food:${k}`)));
   const foodAll = stitchEarly(food, sumSeries(terms.map(k => series("trends", `food:${k}:early`))));
-  sec.append(card({ headline: "US searches for food right now: {v}", title: "US ordering-intent searches", pts: foodAll, sense: 1, name: "Search interest (index)", color: C.orange, maxAgeH: 4,
-    note: `Google Trends for ${terms.map(t => `\u201c${t}\u201d`).join(", ")}: what people type when they're about to order. Relative index, not order counts.` }));
+  sec.append(card({ headline: "Searches for food are {v} normal for this time of day", relative: true, title: "US ordering-intent searches", pts: foodAll, sense: 1, name: "Searches", color: C.orange, maxAgeH: 4,
+    note: `Google Trends for ${terms.map(t => `\u201c${t}\u201d`).join(", ")}: what people type when they're about to order. Compared with the same hour on normal days; Google gives relative interest only, not counts.` }));
 
   // Delivery apps' US App Store rank over time (#1 at the top; gaps = outside the top 100)
   const rk = k => series("appstore", k);
