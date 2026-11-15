@@ -208,3 +208,15 @@ h2 { flex-wrap: wrap; }
 .wanted .on path { fill: #ffd27a; }
 .wanted svg.on { filter: drop-shadow(0 0 4px rgba(255,210,122,.55)); overflow: visible; }
 .wanted .off path { fill: rgba(255,255,255,.08); stroke: rgba(255,243,238,.35); }
+
+/* finale: five stars + "Busted" */
+.busted { max-width: 1152px; margin: 24px auto 8px; padding: 32px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.busted .wanted { margin: 0; justify-content: center; }
+.busted .wanted svg { width: clamp(30px, 7vw, 46px); }
+.busted-art { width: min(80%, 420px); height: auto; overflow: visible;
+  filter: drop-shadow(0 5px 0 #2a0c3d) drop-shadow(0 0 22px rgba(240,66,140,.45)); }
+@media (prefers-reduced-motion: no-preference) {
+  .busted .wanted svg { animation: star-flash 1.2s ease-in-out infinite; }
+  .busted .wanted svg:nth-child(even) { animation-delay: .6s; }
+}
+@keyframes star-flash { 50% { opacity: .45; } }
