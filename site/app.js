@@ -415,20 +415,15 @@ function renderWork() {
   // Freeway congestion (TomTom) is still collected (data/tomtom.json) but hidden for now.
   sec.append(card({ title: "US internet traffic (Cloudflare)", headline: "US internet traffic is at {v} of its range since Nov 1", pts: series("radar", "us_netflows"), sense: 1, fmt: v => pct(v * 100, 0), name: "Traffic (normalised)", color: C.cyan, maxAgeH: 6,
     note: "Normalised volume of US network traffic. GTA VI downloads are 100GB+ per console." }));
-}
-
-function renderFood() {
-  const sec = $("#sec-food"); sec.replaceChildren();
+  // Food searches (formerly the "Food delivery" section)
   const terms = DATA.trends?.meta?.batches?.food || ["food near me", "pizza near me", "delivery near me"];
   const food = sumSeries(terms.map(k => series("trends", `food:${k}`)));
   const foodAll = stitchEarly(food, sumSeries(terms.map(k => series("trends", `food:${k}:early`))));
   sec.append(card({ headline: "Searches for food are {v} normal for this time of day", relative: true, title: "US ordering-intent searches", pts: foodAll, sense: 1, name: "Searches", color: C.orange, maxAgeH: 4,
     note: `Google Trends for ${terms.map(t => `\u201c${t}\u201d`).join(", ")}: what people type when they're about to order. Compared with the same hour on normal days; Google gives relative interest only, not counts.` }));
-
   // Delivery-app App Store ranks (data/appstore.json) are still collected but hidden for now.
-
-  // Full App Store rank list (all tracked apps) is still collected but hidden for now.
 }
+
 
 
 function renderMarket() {
@@ -463,7 +458,7 @@ function setChartWidth(sec) {
 
 function renderAll() {
   setChartWidth($("#sec-work"));
-  renderWork(); renderAttention(); renderFood(); renderMarket();
+  renderWork(); renderAttention(); renderMarket();
   const gen = DATA.meta?.generated;
   $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
   const st = DATA.status || {};
