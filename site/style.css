@@ -192,15 +192,12 @@ footer strong { color: var(--ink-2); }
 .headline > span { min-width: 0; }
 
 
-/* Take-Two cash counter */
-.cash { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0 2px; }
-.cash-label { font-size: 12.5px; color: var(--muted); }
-.cash-value {
-  font: 400 clamp(28px, 5vw, 36px)/1 var(--display); letter-spacing: .02em;
-  color: #4be38a; text-shadow: 0 0 18px rgba(75,227,138,.35), 0 3px 0 #0d3a22;
+/* share prices: green cash lettering */
+.headline .value.cash-value {
+  font: 400 clamp(30px, 5.4vw, 38px)/1 var(--display); letter-spacing: .02em;
+  color: #4be38a; text-shadow: 0 0 14px rgba(75,227,138,.35), 0 3px 0 #0d3a22;
   font-variant-numeric: tabular-nums;
 }
-.cash-value.down { color: #ff5d6c; text-shadow: 0 0 18px rgba(255,93,108,.35), 0 3px 0 #3a0d14; }
 
 /* wanted-level stars next to section headings */
 h2 { flex-wrap: wrap; }

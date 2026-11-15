@@ -298,7 +298,7 @@ function logo(name) {
   return s;
 }
 
-function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false, top = null }) {
+function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false, top = null, cash = null }) {
   const c = el("article", { class: "card" + (wide ? " wide" : "") });
   const p = pts && latest(pts, maxAgeH);
   // Sentence headline ("{v} of the top 100 … are about GTA VI") when there's a value; small label otherwise.
@@ -315,7 +315,8 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
     const relOk = relDev != null && Number.isFinite(relDev);
     const relText = relOk ? `${Math.abs(relDev * 100).toFixed(0)}%` : "–";
     const relDir = relOk ? (relDev >= 0 ? "above" : "below") : "vs";
-    const valueEl = el("span", { class: "value" }, relative ? relText : (valueText ?? fmt(p[1])));
+    const valueEl = el("span", { class: "value" + (cash ? " cash-value" : "") }, relative ? relText : (valueText ?? fmt(p[1])));
+    if (cash) rollUp(valueEl, p[1], fmt, cash);
     let row;
     if (useHeadline) {
       let [before, after] = headline.split("{v}");
@@ -427,45 +428,26 @@ function renderWork() {
 
 
 
-// Market-value change per company, as a rolling green (or red) cash figure.
-// Before launch: since the first trading bar on/after Nov 1. After launch: since the last bar before launch.
-const cashAnimated = new Set();
-function cashFigure(sym) {
-  const pts = series("stocks", `${sym}:price`), shares = DATA.stocks?.meta?.[sym]?.shares;
-  if (!pts.length || !shares) return null;
-  const launched = Date.now() >= LAUNCH;
-  const ref = launched ? [...pts].reverse().find(([t]) => t < LAUNCH) : pts[0];
-  if (!ref) return null;
-  const last = pts[pts.length - 1];
-  const delta = (last[1] - ref[1]) * shares;
-  const fmtCash = v => {
-    const a = Math.abs(v), sign = v >= 0 ? "+" : "\u2212";
-    return a >= 1e9 ? `${sign}$${(a / 1e9).toFixed(2)}B` : `${sign}$${(a / 1e6).toFixed(0)}M`;
-  };
-  const num = el("span", { class: "cash-value" + (delta < 0 ? " down" : "") }, fmtCash(cashAnimated.has(sym) ? delta : 0));
-  const box = el("div", { class: "cash" }, num,
-    el("span", { class: "cash-label" }, `market value ${launched ? "since launch" : "since Nov 1st"}`));
-  if (!cashAnimated.has(sym)) {
-    const roll = () => {
-      cashAnimated.add(sym);
-      const t0 = performance.now(), dur = 1800;
-      const tick = now => {
-        const k = Math.min(1, (now - t0) / dur);
-        num.textContent = fmtCash(delta * (1 - Math.pow(1 - k, 3)));
-        if (k < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    };
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { cashAnimated.add(sym); num.textContent = fmtCash(delta); }
-    else if ("IntersectionObserver" in window) {
-      // roll up when this figure scrolls into view (once per page load)
-      const io = new IntersectionObserver(entries => {
-        if (entries.some(e => e.isIntersecting)) { io.disconnect(); roll(); }
-      }, { threshold: 0.6 });
-      io.observe(num);
-    } else roll();
+// Rolls a number up from 0 when its element scrolls into view (once per page load per key).
+const rolled = new Set();
+function rollUp(node, target, fmt, key) {
+  if (rolled.has(key) || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    rolled.add(key); node.textContent = fmt(target); return;
   }
-  return box;
+  node.textContent = fmt(0);
+  const roll = () => {
+    rolled.add(key);
+    const t0 = performance.now(), dur = 1600;
+    const tick = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      node.textContent = fmt(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  if (!("IntersectionObserver" in window)) return roll();
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); roll(); } }, { threshold: 0.6 });
+  io.observe(node);
 }
 
 function renderMarket() {
@@ -477,7 +459,7 @@ function renderMarket() {
   ];
   for (const [sym, title, color, blurb] of stocks) {
     const d = latest(series("stocks", `${sym}:pct`), 96)?.[1];
-    sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, top: cashFigure(sym), pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
+    sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, cash: sym, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
       extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: `${blurb} Trading hours only; nights and weekends are collapsed.` }));
   }
 }
