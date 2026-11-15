@@ -20,7 +20,7 @@ FULL_RES_DAYS = 7
 # terms of similar volume are grouped together.
 TRENDS_BATCHES = {
     "sick": ["call in sick", "sick day"],
-    "food": ["DoorDash", "Uber Eats", "pizza delivery", "Domino's"],
+    "food": ["food near me", "pizza near me", "delivery near me"],  # ordering intent
 }
 
 # --- US App Store top-free ranks. key -> name prefix to match.

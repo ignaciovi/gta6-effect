@@ -55,7 +55,8 @@ def _overlap_ratio(newer, older, terms):
 
 def fetch():
     try:
-        daily_updated = json.loads(DATA_FILE.read_text()).get("meta", {}).get("early_updated", 0)
+        _meta = json.loads(DATA_FILE.read_text()).get("meta", {})
+        daily_updated = _meta.get("early_updated", 0) if _meta.get("early_terms") == TRENDS_BATCHES else 0
     except (FileNotFoundError, ValueError):
         daily_updated = 0
     try:
@@ -100,4 +101,5 @@ def fetch():
             for t in terms:
                 series[f"{batch}:{t}:early"] = [[ts, round(v, 2)] for ts, v in early[t]]
         meta["early_updated"] = int(time.time())
+        meta["early_terms"] = TRENDS_BATCHES
     return {"mode": "replace", "series": series, "meta": meta}
