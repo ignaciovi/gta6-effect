@@ -528,7 +528,7 @@ initRange();
 function addWantedStars() {
   const STAR = "M12 1.8l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.1l7.1-.7z";
   document.querySelectorAll("main section > h2").forEach((h2, i) => {
-    if (h2.querySelector(".wanted")) return;
+    if (h2.previousElementSibling?.classList.contains("wanted")) return;
     const level = Math.min(5, i + 1);
     const box = el("span", { class: "wanted", role: "img", "aria-label": `Wanted level ${level} of 5` });
     for (let k = 0; k < 5; k++) {
@@ -536,7 +536,7 @@ function addWantedStars() {
       svg.append(svgEl("path", { d: STAR }));
       box.append(svg);
     }
-    h2.append(box);
+    h2.before(box); // stars sit above the section title
   });
 }
 addWantedStars();
