@@ -378,9 +378,7 @@ function renderAttention() {
   // Reconstructed from past broadcasts: its own chart, never spliced into the live metric.
   const vod = DATA.twitch_vod, liveN = new Map(series("twitch_vod", "panel_live").map(([t, n]) => [t, n]));
   const est = series("twitch_vod", "panel_gta_share").filter(([t]) => (liveN.get(t) || 0) >= 100);
-  if (est.length) sec.append(card({ headline: "An estimated {v} of big streamers mentioned GTA VI in the last hour tracked", title: "Big streamers mentioning GTA VI (estimated, last 7 days)", pts: est, fmt: v => pct(v, 1),
-    name: "% of live panel channels (estimate)", color: C.cyan, showBaseline: false, maxAgeH: 48,
-    note: `Reconstructed from past broadcasts of ${vod.meta.panel_size} big channels: the share of those live each hour whose broadcast title mentions GTA VI. An estimate with a fixed panel, one title per broadcast and no viewer weighting, so it reads lower than the live top-100 card. Use it for the trend, not the level.` }));
+  // Estimated big-streamer share (data/twitch_vod.json) is still refreshed every 6h but hidden for now.
 
   const slots = tr?.meta?.slots || 100, nowHits = latest(series("trending", "world_gta6_items"), 8)?.[1];
   const items = tr?.meta?.gta6_items || [];
