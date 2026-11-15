@@ -298,7 +298,7 @@ function logo(name) {
   return s;
 }
 
-function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false }) {
+function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false, top = null }) {
   const c = el("article", { class: "card" + (wide ? " wide" : "") });
   const p = pts && latest(pts, maxAgeH);
   // Sentence headline ("{v} of the top 100 … are about GTA VI") when there's a value; small label otherwise.
@@ -334,6 +334,7 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
         `${Math.abs(dev * 100).toFixed(Math.abs(dev) < 0.1 ? 1 : 0)}% vs normal`));
     }
     if (row.childNodes.length) c.append(row);
+    if (top) c.append(top);
     if (chart) {
       const chartEl = lineChart({ main: pts, name: name || title, color, yFmt: fmt, step, showBaseline, sessions, context, others, invert, relative });
       if (chartEl.dataset.zoomNote) c.append(el("p", { class: "zoom-note" }, chartEl.dataset.zoomNote));
@@ -426,43 +427,42 @@ function renderWork() {
 
 
 
-// Take-Two market value change, as a rolling green cash counter.
+// Market-value change per company, as a rolling green (or red) cash figure.
 // Before launch: since the first trading bar on/after Nov 1. After launch: since the last bar before launch.
-let cashAnimated = false;
-function cashCard() {
-  const pts = series("stocks", "TTWO:price"), shares = DATA.stocks?.meta?.TTWO?.shares;
+const cashAnimated = new Set();
+function cashFigure(sym) {
+  const pts = series("stocks", `${sym}:price`), shares = DATA.stocks?.meta?.[sym]?.shares;
   if (!pts.length || !shares) return null;
   const launched = Date.now() >= LAUNCH;
   const ref = launched ? [...pts].reverse().find(([t]) => t < LAUNCH) : pts[0];
   if (!ref) return null;
   const last = pts[pts.length - 1];
   const delta = (last[1] - ref[1]) * shares;
-  const fmtCash = v => `${v >= 0 ? "+" : "\u2212"}$${(Math.abs(v) / 1e9).toFixed(2)}B`;
-  const num = el("span", { class: "cash-value" + (delta < 0 ? " down" : "") }, fmtCash(cashAnimated ? delta : 0));
-  const c = el("article", { class: "card wide cash" },
-    el("p", { class: "label" }, launched ? "Take-Two market value since launch" : "Take-Two market value since Nov 1st"),
-    num,
-    el("p", { class: "note" }, `Share price ${money(ref[1])} \u2192 ${money(last[1])} \u00d7 ${(shares / 1e6).toFixed(0)}M shares. Market value now: $${(last[1] * shares / 1e9).toFixed(2)}B.`));
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  if (!cashAnimated) {
-    cashAnimated = true;
-    if (reduce) num.textContent = fmtCash(delta);
+  const fmtCash = v => {
+    const a = Math.abs(v), sign = v >= 0 ? "+" : "\u2212";
+    return a >= 1e9 ? `${sign}$${(a / 1e9).toFixed(2)}B` : `${sign}$${(a / 1e6).toFixed(0)}M`;
+  };
+  const num = el("span", { class: "cash-value" + (delta < 0 ? " down" : "") }, fmtCash(cashAnimated.has(sym) ? delta : 0));
+  const box = el("div", { class: "cash" }, num,
+    el("span", { class: "cash-label" }, `market value ${launched ? "since launch" : "since Nov 1st"}`));
+  if (!cashAnimated.has(sym)) {
+    cashAnimated.add(sym);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) num.textContent = fmtCash(delta);
     else {
       const t0 = performance.now(), dur = 1800;
       const tick = now => {
-        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-        num.textContent = fmtCash(delta * e);
+        const k = Math.min(1, (now - t0) / dur);
+        num.textContent = fmtCash(delta * (1 - Math.pow(1 - k, 3)));
         if (k < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     }
   }
-  return c;
+  return box;
 }
 
 function renderMarket() {
   const sec = $("#sec-market"); sec.replaceChildren();
-  const cc = cashCard(); if (cc) sec.append(cc);
   const stocks = [
     ["TTWO", "Take-Two Interactive (TTWO)", C.pink, "GTA's publisher."],
     ["SONY", "Sony (SONY)", C.cyan, "PlayStation 5 maker."],
@@ -470,7 +470,7 @@ function renderMarket() {
   ];
   for (const [sym, title, color, blurb] of stocks) {
     const d = latest(series("stocks", `${sym}:pct`), 96)?.[1];
-    sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
+    sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, top: cashFigure(sym), pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
       extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: `${blurb} Trading hours only; nights and weekends are collapsed.` }));
   }
 }
