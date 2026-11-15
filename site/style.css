@@ -191,3 +191,19 @@ footer strong { color: var(--ink-2); }
 .headline .value { font-size: 30px; line-height: 1; color: var(--ink); margin-right: 6px; vertical-align: -3px; letter-spacing: -.01em; }
 .headline > span { min-width: 0; }
 
+
+/* Take-Two cash counter */
+.cash-value {
+  display: block; margin: 6px 0 4px; font: 400 clamp(40px, 9vw, 64px)/1 var(--display); letter-spacing: .02em;
+  color: #4be38a; text-shadow: 0 0 18px rgba(75,227,138,.35), 0 3px 0 #0d3a22;
+  font-variant-numeric: tabular-nums;
+}
+.cash-value.down { color: #ff5d6c; text-shadow: 0 0 18px rgba(255,93,108,.35), 0 3px 0 #3a0d14; }
+
+/* wanted-level stars next to section headings */
+h2 { flex-wrap: wrap; }
+h2 .wanted { display: inline-flex; gap: 3px; margin-left: 6px; align-self: center; background: none; padding: 0; transform: none; font-size: inherit; }
+.wanted svg { width: clamp(16px, 3.4vw, 22px); height: auto; }
+.wanted path { stroke: #2a0c3d; stroke-width: 1.6; stroke-linejoin: round; }
+.wanted .on path { fill: #ffd27a; filter: drop-shadow(0 0 4px rgba(255,210,122,.6)); }
+.wanted .off path { fill: rgba(255,255,255,.08); stroke: rgba(255,243,238,.35); }

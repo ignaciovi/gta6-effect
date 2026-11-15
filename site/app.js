@@ -426,8 +426,43 @@ function renderWork() {
 
 
 
+// Take-Two market value change, as a rolling green cash counter.
+// Before launch: since the first trading bar on/after Nov 1. After launch: since the last bar before launch.
+let cashAnimated = false;
+function cashCard() {
+  const pts = series("stocks", "TTWO:price"), shares = DATA.stocks?.meta?.TTWO?.shares;
+  if (!pts.length || !shares) return null;
+  const launched = Date.now() >= LAUNCH;
+  const ref = launched ? [...pts].reverse().find(([t]) => t < LAUNCH) : pts[0];
+  if (!ref) return null;
+  const last = pts[pts.length - 1];
+  const delta = (last[1] - ref[1]) * shares;
+  const fmtCash = v => `${v >= 0 ? "+" : "\u2212"}$${(Math.abs(v) / 1e9).toFixed(2)}B`;
+  const num = el("span", { class: "cash-value" + (delta < 0 ? " down" : "") }, fmtCash(cashAnimated ? delta : 0));
+  const c = el("article", { class: "card wide cash" },
+    el("p", { class: "label" }, launched ? "Take-Two market value since launch" : "Take-Two market value since Nov 1st"),
+    num,
+    el("p", { class: "note" }, `Share price ${money(ref[1])} \u2192 ${money(last[1])} \u00d7 ${(shares / 1e6).toFixed(0)}M shares. Market value now: $${(last[1] * shares / 1e9).toFixed(2)}B.`));
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if (!cashAnimated) {
+    cashAnimated = true;
+    if (reduce) num.textContent = fmtCash(delta);
+    else {
+      const t0 = performance.now(), dur = 1800;
+      const tick = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        num.textContent = fmtCash(delta * e);
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }
+  return c;
+}
+
 function renderMarket() {
   const sec = $("#sec-market"); sec.replaceChildren();
+  const cc = cashCard(); if (cc) sec.append(cc);
   const stocks = [
     ["TTWO", "Take-Two Interactive (TTWO)", C.pink, "GTA's publisher."],
     ["SONY", "Sony (SONY)", C.cyan, "PlayStation 5 maker."],
@@ -488,6 +523,23 @@ function initRange() {
 }
 
 initRange();
+
+// Wanted-level stars beside each section heading: section N shows N of 5 filled.
+function addWantedStars() {
+  const STAR = "M12 1.8l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.1l7.1-.7z";
+  document.querySelectorAll("main section > h2").forEach((h2, i) => {
+    if (h2.querySelector(".wanted")) return;
+    const level = Math.min(5, i + 1);
+    const box = el("span", { class: "wanted", role: "img", "aria-label": `Wanted level ${level} of 5` });
+    for (let k = 0; k < 5; k++) {
+      const svg = svgEl("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", class: k < level ? "on" : "off" });
+      svg.append(svgEl("path", { d: STAR }));
+      box.append(svg);
+    }
+    h2.append(box);
+  });
+}
+addWantedStars();
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => DATA.meta && renderAll(), 200); });
 renderClock(); setInterval(renderClock, 1000);
 load(); setInterval(load, 5 * 60e3);
