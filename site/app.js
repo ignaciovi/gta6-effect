@@ -10,7 +10,7 @@ try { const r = localStorage.getItem("range"); if (r != null && Number.isFinite(
 // RANGE_DAYS = 0 means "Since Nov 1st '26": everything from the start of the
 // backfilled history (HISTORY_START in collector/config.py).
 const HISTORY_START = Date.parse("2026-11-01T00:00:00Z");
-// Snapshot metrics (Twitch top 100, Trending Now) were collected patchily until the
+// Snapshot metrics (Twitch top 100, Trending Now, YouTube) were collected patchily until the
 // Cloudflare timer made runs reliable; their charts start here so they have no big gaps.
 const CONTINUOUS_SINCE = Date.parse("2026-11-16T15:30:00Z");
 const continuous = pts => pts.filter(p => p[0] >= CONTINUOUS_SINCE);
@@ -410,7 +410,7 @@ function renderAttention() {
   const per = yt?.meta?.per_region || {};
   const regionRow = Object.entries(per).sort((a, b) => b[1] - a[1]).map(([r, v]) => `${r} ${v.toFixed(0)}%`).join(" · ");
   const gaming = latest(series("youtube", "world_gaming_share"), 8)?.[1];
-  sec.append(card({ icon: "youtube", snapshot: true, title: "Most-popular YouTube videos about GTA VI (10 countries)", headline: "{v} of the most-popular YouTube videos are about GTA VI", pts: series("youtube", "world_top100_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "youtube", snapshot: true, title: "Most-popular YouTube videos about GTA VI (10 countries)", headline: "{v} of the most-popular YouTube videos are about GTA VI", pts: continuous(series("youtube", "world_top100_share")), fmt: v => pct(v, 1),
     name: "% of top-100 videos (avg)", showBaseline: false,
     extra: yt?.meta?.top_gta6_videos?.length ? list(yt.meta.top_gta6_videos.slice(0, 5).map(v => [v.title, "", v.regions.join(" ")])) : null,
     note: [regionRow && `By country: ${regionRow}.`, gaming != null && `Gaming category: ${pct(gaming, 1)}.`].filter(Boolean).join(" ") || null }));
