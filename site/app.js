@@ -300,13 +300,17 @@ function logo(name) {
 
 function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide, chart = true, extra, name, color, step, maxAgeH = 8, showBaseline = true, valueText, floor = 0, sessions = false, snapshot = false, context = [], others = [], invert = false, relative = false, top = null, cash = null }) {
   const c = el("article", { class: "card" + (wide ? " wide" : "") });
-  const p = pts && latest(pts, maxAgeH);
+  // If collection stalls, keep showing the last known value and say how old it is.
+  const fresh = pts && latest(pts, maxAgeH);
+  const p = fresh || pts?.[pts.length - 1] || null;
+  const stale = p && !fresh;
+  if (stale) maxAgeH = Infinity;
   // Sentence headline ("{v} of the top 100 … are about GTA VI") when there's a value; small label otherwise.
   const useHeadline = headline && p;
   if (!useHeadline) c.append(el("p", { class: "label" + (icon ? " with-logo" : "") }, icon ? logo(icon) : null, title));
   if (!p && !extra) {
     c.classList.add("pending");
-    c.append(el("div", { class: "stat-row" }, el("span", { class: "value" }, pts?.length ? "Data is stale" : "Coming soon")));
+    c.append(el("div", { class: "stat-row" }, el("span", { class: "value" }, "Coming soon")));
     if (note) c.append(el("p", { class: "note" }, note));
     return c;
   }
@@ -352,6 +356,7 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
   }
   if (extra) c.append(extra);
   if (note) c.append(el("p", { class: "note" }, note));
+  if (stale) c.append(el("p", { class: "note since" }, `Last updated ${fmtTime(p[0])}.`));
   const first = pts?.[0]?.[0];
   if (snapshot && chart && first && Date.now() - first < Math.min(RANGE_DAYS || 3, 3) * DAY)
     c.append(el("p", { class: "note since" }, `No public archive exists for this metric: tracking since ${fmtTime(first)}, so history builds up from here.`));
