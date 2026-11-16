@@ -458,9 +458,8 @@ function renderMarket() {
     ["MSFT", "Microsoft (MSFT)", C.orange, "Xbox maker; gaming is a small slice of its business."],
   ];
   for (const [sym, title, color, blurb] of stocks) {
-    const d = latest(series("stocks", `${sym}:pct`), 96)?.[1];
     sec.append(card({ title, headline: `${title.split(" (")[0]} shares at {v}`, cash: sym, pts: series("stocks", `${sym}:price`), fmt: money, showBaseline: false, maxAgeH: 96, name: "Share price (USD)", color, sessions: true,
-      extra: d != null ? el("p", { class: "note" }, `Last session: ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`) : null, note: `${blurb} Trading hours only; nights and weekends are collapsed.` }));
+      note: `${blurb} Trading hours only; nights and weekends are collapsed.` }));
   }
 }
 
