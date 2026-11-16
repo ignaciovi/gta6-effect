@@ -214,6 +214,14 @@ function lineChart({ main, name, color = C.pink, showBaseline = true, yFmt = com
   if (ctx.length) svg.append(svgEl("path", { ...common, d: path([...ctx, pts[0]], true), stroke: color, "stroke-width": 2, opacity: .4 }));
   if (base.length) svg.append(svgEl("path", { ...common, d: path(base), stroke: C.base, "stroke-width": 1.5, opacity: .9 }));
   for (const o of oth) if (o.pts.length) svg.append(svgEl("path", { ...common, d: path(o.pts), stroke: o.color, "stroke-width": 2 }));
+  // Gaps (missed collection runs) are bridged with a faint dashed line: trend kept, nothing invented.
+  if (!sessions) {
+    const gaps = pts.slice(1).map((p, i) => [pts[i], p]).filter(([a, b]) => b[0] - a[0] > 4 * HOUR);
+    if (gaps.length) {
+      svg.append(svgEl("path", { ...common, d: gaps.map(g => path(g, true)).join(""), stroke: color, "stroke-width": 1.5, "stroke-dasharray": "3 4", opacity: .55 }));
+      svg.dataset.bridged = "1";
+    }
+  }
   svg.append(svgEl("path", { ...common, d: path(pts), stroke: color, "stroke-width": 2 }));
   const last = pts[pts.length - 1];
   svg.append(svgEl("ellipse", { cx: X(last[0]), cy: Y(last[1]), rx: 4.5, ry: 4.5, fill: color, stroke: C.surface, "stroke-width": 2, class: "enddot" }));
@@ -348,6 +356,7 @@ function card({ icon, title, headline, pts, fmt = compact, sense = 1, note, wide
       const key = (col, label) => { const i = el("i"); i.style.background = col; lg.append(el("span", {}, i, label)); };
       key(color || C.pink, name || "Now");
       for (const o of others) key(o.color, o.name);
+      if (chartEl.dataset.bridged) { const i = el("i", { class: "dash" }); i.style.borderColor = color || C.pink; lg.append(el("span", {}, i, "No data (gap joined)")); }
       if (showBaseline) key(C.base, "Normal for that hour");
       if (context.length && context[0][0] >= rangeStart()) { const i = el("i"); i.style.background = color || C.pink; i.style.opacity = .4; lg.append(el("span", {}, i, "Daily (earlier)")); }
       c.append(lg);
