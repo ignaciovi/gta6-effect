@@ -421,7 +421,7 @@ function renderWork() {
   // Commuting and internet use (formerly "Roads & wires")
   // Freeway congestion (TomTom) is still collected (data/tomtom.json) but hidden for now.
   sec.append(card({ title: "US internet traffic (Cloudflare)", headline: "US internet traffic is at {v} of its range since Nov 1", pts: series("radar", "us_netflows"), sense: 1, fmt: v => pct(v * 100, 0), name: "Traffic (normalised)", color: C.cyan, maxAgeH: 6,
-    note: "Normalised volume of US network traffic. GTA VI downloads are 100GB+ per console." }));
+    note: "Normalised volume of US network traffic." }));
   // Food searches (formerly the "Food delivery" section)
   const terms = DATA.trends?.meta?.batches?.food || ["food near me", "pizza near me", "delivery near me"];
   const food = sumSeries(terms.map(k => series("trends", `food:${k}`)));
