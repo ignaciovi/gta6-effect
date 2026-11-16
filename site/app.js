@@ -10,6 +10,10 @@ try { const r = localStorage.getItem("range"); if (r != null && Number.isFinite(
 // RANGE_DAYS = 0 means "Since Nov 1st '26": everything from the start of the
 // backfilled history (HISTORY_START in collector/config.py).
 const HISTORY_START = Date.parse("2026-11-01T00:00:00Z");
+// Snapshot metrics (Twitch top 100, Trending Now) were collected patchily until the
+// Cloudflare timer made runs reliable; their charts start here so they have no big gaps.
+const CONTINUOUS_SINCE = Date.parse("2026-11-16T15:30:00Z");
+const continuous = pts => pts.filter(p => p[0] >= CONTINUOUS_SINCE);
 const rangeStart = () => RANGE_DAYS ? Date.now() - RANGE_DAYS * DAY : HISTORY_START;
 
 // ---------- utils ----------
@@ -382,10 +386,10 @@ function list(items) {
 function renderAttention() {
   const sec = $("#sec-attention"); sec.replaceChildren();
   const tw = DATA.twitch, yt = DATA.youtube, tr = DATA.trending;
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", headline: "{v} of the top 100 Twitch streams are about GTA VI", pts: series("twitch", "global_stream_share"), fmt: v => pct(v, 0),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Top 100 Twitch streams about GTA VI", headline: "{v} of the top 100 Twitch streams are about GTA VI", pts: continuous(series("twitch", "global_stream_share")), fmt: v => pct(v, 0),
     name: "% of top 100 live streams", showBaseline: false,
     note: `The 100 most-watched live streams worldwide whose game or title is GTA VI.` }));
-  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are watching something related to GTA VI", pts: series("twitch", "global_viewer_share"), fmt: v => pct(v, 1),
+  sec.append(card({ icon: "twitch", snapshot: true, title: "Share of Twitch viewers watching GTA VI", headline: "{v} of top-100 Twitch viewers are watching something related to GTA VI", pts: continuous(series("twitch", "global_viewer_share")), fmt: v => pct(v, 1),
     name: "% of top-100 viewers", color: C.cyan, showBaseline: false,
     extra: tw?.meta?.top_gta6_streams_global?.length ? list(tw.meta.top_gta6_streams_global.map(s => [(s.playing ? "🎮 " : "💬 ") + s.user, compact(s.viewers), "viewers"])) : null,
     note: "🎮 playing GTA VI · 💬 mentions it in the title." }));
@@ -397,7 +401,7 @@ function renderAttention() {
 
   const slots = tr?.meta?.slots || 100, nowHits = latest(series("trending", "world_gta6_items"), 8)?.[1];
   const items = tr?.meta?.gta6_items || [];
-  sec.append(card({ icon: "google", snapshot: true, title: "GTA VI in Google Trending Now (10 countries)", headline: "{v} trending Google searches in 10 countries are about GTA VI", pts: series("trending", "world_slot_share"), fmt: v => pct(v, 0),
+  sec.append(card({ icon: "google", snapshot: true, title: "GTA VI in Google Trending Now (10 countries)", headline: "{v} trending Google searches in 10 countries are about GTA VI", pts: continuous(series("trending", "world_slot_share")), fmt: v => pct(v, 0),
     name: "% of trending slots", color: C.orange, showBaseline: false, step: true,
     valueText: nowHits != null ? `${nowHits} of ${slots}` : undefined,
     extra: items.length ? list(items.slice(0, 6).map(i => ["🎮 " + i.title, compact(i.traffic) + "+", i.geo])) : (tr ? el("p", { class: "note" }, "No GTA VI searches in any country's top 10 right now.") : null),
