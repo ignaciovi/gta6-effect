@@ -142,7 +142,6 @@ h2 span {
 .delta.slack .arrow { color: var(--up); }
 .delta.work .arrow { color: var(--down); }
 .card .note { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
-.card .note.since { color: var(--neon-orange); }
 .card.pending .value { color: var(--muted); font-size: 22px; font-weight: 600; }
 
 .chart { width: 100%; height: auto; display: block; margin-top: 10px; touch-action: pan-y; }
