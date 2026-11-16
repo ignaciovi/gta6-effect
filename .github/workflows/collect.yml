@@ -2,7 +2,7 @@ name: Collect & deploy
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # GitHub may start scheduled runs a few minutes late
+    - cron: "7,37 * * * *"   # off the :00/:30 rush, when GitHub delays or drops the most scheduled runs
   workflow_dispatch:
   push:
     branches: [main]
