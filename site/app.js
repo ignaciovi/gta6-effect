@@ -414,10 +414,6 @@ function renderAttention() {
     name: "% of top-100 videos (avg)", showBaseline: false,
     extra: yt?.meta?.top_gta6_videos?.length ? list(yt.meta.top_gta6_videos.slice(0, 5).map(v => [v.title, "", v.regions.join(" ")])) : null,
     note: [regionRow && `By country: ${regionRow}.`, gaming != null && `Gaming category: ${pct(gaming, 1)}.`].filter(Boolean).join(" ") || null }));
-  sec.append(card({ title: "Steam users online (global)", headline: "{v} people are online on Steam: does PC gaming dip as players switch to consoles?", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
-    note: "If players switch to their PS5 or Xbox, Steam should dip." }));
-  sec.append(card({ title: "GTA V players on Steam", headline: "{v} people are still playing GTA V on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
-    note: "Does the old game empty out?" }));
 }
 
 function renderWork() {
@@ -467,6 +463,14 @@ function rollUp(node, target, fmt, key) {
   io.observe(node);
 }
 
+function renderPlayers() {
+  const sec = $("#sec-players"); sec.replaceChildren();
+  sec.append(card({ title: "Steam users online (global)", headline: "{v} people are online on Steam: does PC gaming dip as players switch to consoles?", pts: series("steam", "logged_in"), sense: -1, name: "Logged in",
+    note: "If players switch to their PS5 or Xbox, Steam should dip." }));
+  sec.append(card({ title: "GTA V players on Steam", headline: "{v} people are still playing GTA V on Steam", pts: series("steam", "gtav_players"), sense: -1, name: "Concurrent players", color: C.cyan,
+    note: "Does the old game empty out?" }));
+}
+
 function renderMarket() {
   const sec = $("#sec-market"); sec.replaceChildren();
   const stocks = [
@@ -498,7 +502,7 @@ function setChartWidth(sec) {
 
 function renderAll() {
   setChartWidth($("#sec-work"));
-  renderWork(); renderAttention(); renderMarket();
+  renderWork(); renderAttention(); renderPlayers(); renderMarket();
   const gen = DATA.meta?.generated;
   $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
   const st = DATA.status || {};
