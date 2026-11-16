@@ -3,17 +3,19 @@
 const URL = "https://api.github.com/repos/ignaciovi/gta6-effect/actions/workflows/collect.yml/dispatches";
 
 async function dispatch(env) {
+  const t = env.GITHUB_TOKEN || "";
+  if (!t) throw new Error("GITHUB_TOKEN secret is not set");
   const r = await fetch(URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Authorization: `Bearer ${t.trim()}`,
       Accept: "application/vnd.github+json",
       "User-Agent": "gta6-effect-timer",
       "X-GitHub-Api-Version": "2022-11-28",
     },
     body: JSON.stringify({ ref: "main" }),
   });
-  if (r.status !== 204) throw new Error(`dispatch failed: ${r.status} ${await r.text()}`);
+  if (r.status !== 204) throw new Error(`dispatch failed: ${r.status} (token: ${t.trim().length} chars, starts github_pat_: ${t.trim().startsWith("github_pat_")}) ${await r.text()}`);
   console.log("workflow dispatched");
 }
 
