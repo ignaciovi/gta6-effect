@@ -229,3 +229,39 @@ main h2 {
     0 0 16px rgba(255,79,163,.35),
     0 0 30px rgba(255,79,163,.18);
 }
+
+/* radar minimap (top right) */
+.radar { position: fixed; top: 64px; right: 16px; z-index: 30; width: 120px; height: 120px; border-radius: 50%;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.55)); transition: opacity .25s, transform .25s; }
+.radar-svg { width: 100%; height: 100%; display: block; }
+.radar-arrow { transition: transform .15s ease-out; }
+.radar-blip { cursor: pointer; }
+.radar-blip:hover circle, .radar-blip:focus-visible circle { stroke: var(--neon-pink); stroke-width: 1.2; }
+.radar-cash { font: 800 6.4px/1 system-ui, sans-serif; fill: #3dff8a; }
+.radar-cops { fill: #ff3b5c; animation: radar-siren 1s steps(1) infinite; }
+@keyframes radar-siren { 50% { fill: #3b7bff; } }
+.radar-n { font: 800 5px/1 system-ui, sans-serif; fill: #fff; }
+@media (max-width: 760px) {
+  .radar { width: 84px; height: 84px; right: 10px; opacity: 0; transform: scale(.8); pointer-events: none; }
+  .radar.shown { opacity: 1; transform: none; pointer-events: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .radar-arrow { transition: none; } .radar-cops { animation: none; } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* cash pickups next to the Money title (click the title for more) */
+section.has-cash { position: relative; }
+.cash-layer { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.cash-title { cursor: pointer; user-select: none; display: inline-block; }
+.cash-title:active { transform: translateY(1px); }
+.cash-title:focus-visible { outline: 2px solid var(--neon-pink); outline-offset: 4px; border-radius: 4px; }
+.cash-pickup { position: absolute; width: 44px; height: 34px; perspective: 200px; filter: drop-shadow(0 0 6px rgba(76,210,122,.65));
+  animation: cash-drop .6s cubic-bezier(.3,1.4,.5,1) both; }
+.cash-spin { display: block; width: 100%; height: 100%; animation: cash-spin 2.4s linear infinite; animation-delay: var(--d, 0s); }
+.cash-spin svg { width: 100%; height: 100%; display: block; }
+.cash-pop { position: absolute; font: 800 15px/1 system-ui, sans-serif; color: #3dff8a; text-shadow: 0 0 6px rgba(61,255,138,.7), 0 2px 0 #0b2a15;
+  pointer-events: none; animation: cash-pop .9s ease-out forwards; }
+@keyframes cash-drop { from { transform: translateY(-140px); opacity: 0; } 30% { opacity: 1; } to { transform: none; } }
+@keyframes cash-spin { to { transform: rotateY(360deg); } }
+@keyframes cash-pop { to { transform: translateY(-34px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cash-pickup, .cash-spin, .cash-pop { animation: none; } }
+main section, .busted { scroll-margin-top: var(--bar-h, 56px); }

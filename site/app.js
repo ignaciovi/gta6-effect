@@ -554,3 +554,128 @@ addWantedStars();
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => DATA.meta && renderAll(), 200); });
 renderClock(); setInterval(renderClock, 1000);
 load(); setInterval(load, 5 * 60e3);
+
+// Radar minimap (top right): the page drawn as a small coastal town. Each section is
+// a blip; the arrow tracks the scroll position and faces the scroll direction.
+// Original artwork in the open-world-radar style, not a copy of any game's map or HUD.
+function initRadar() {
+  const targets = [...document.querySelectorAll("main section"), document.querySelector(".busted")].filter(Boolean);
+  const kinds = ["work", "tv", "pad", "cash", "cops"];
+  const names = ["Productivity", "Attention share", "Players", "Money", "Busted"];
+  targets.forEach((t, i) => { if (!t.id) t.id = "s-" + names[i].toLowerCase().replace(/\W+/g, "-"); });
+  const S = (tag, a, ...kids) => { const n = svgEl(tag, a); kids.forEach(k => n.append(k)); return n; };
+  const svg = S("svg", { viewBox: "0 0 100 100", class: "radar-svg" });
+  svg.append(S("defs", {}, S("clipPath", { id: "radar-clip" }, S("circle", { cx: 50, cy: 50, r: 47 }))));
+  const map = S("g", { "clip-path": "url(#radar-clip)" });
+  const coast = "M74 0 C69 18 79 38 72 58 C67 74 75 88 70 100";
+  map.append(
+    S("rect", { width: 100, height: 100, fill: "#3b2d55" }),
+    S("rect", { x: 13, y: 39, width: 16, height: 9, rx: 1.5, fill: "#2f5a46" }),           // park
+    S("rect", { x: 46, y: 70, width: 14, height: 7, rx: 1, fill: "#4a3a68" }),              // block
+    S("rect", { x: 14, y: 12, width: 12, height: 6, rx: 1, fill: "#4a3a68" }),
+    S("path", { d: coast, fill: "none", stroke: "#e7c48a", "stroke-width": 5 }),            // beach
+    S("path", { d: coast + " L100 100 L100 0Z", fill: "#1b6b8a" }),                          // sea
+    S("rect", { x: 72, y: 47, width: 13, height: 1.8, fill: "#c9a46a" }),                    // pier
+    S("path", { d: "M0 28 C18 34 30 44 40 60", fill: "none", stroke: "#8c7aa8", "stroke-width": 2.6 }), // highway
+    S("path", { d: "M40 0 V100", stroke: "#6f5e8c", "stroke-width": 3 }),                     // avenue
+    S("path", { d: "M8 20 H71 M6 35 H74 M6 52 H71 M10 66 H69 M14 82 H71", stroke: "#6f5e8c", "stroke-width": 1.4 }),
+  );
+  for (const [x, y] of [[70.5, 22], [73.5, 64], [69, 86]]) {                                 // palms
+    map.append(S("path", { d: `M${x - 2} ${y} h4 M${x} ${y - 2} v4 M${x - 1.4} ${y - 1.4} l2.8 2.8 M${x + 1.4} ${y - 1.4} l-2.8 2.8`, stroke: "#3fa36b", "stroke-width": .9, "stroke-linecap": "round" }));
+  }
+  const icon = {
+    work: () => [S("rect", { x: -2.5, y: -1.3, width: 5, height: 3.4, rx: .5, fill: "#ffd27a" }), S("path", { d: "M-1 -1.3 v-1 h2 v1", fill: "none", stroke: "#ffd27a", "stroke-width": .7 })],
+    tv: () => [S("rect", { x: -2.6, y: -1.6, width: 5.2, height: 3.6, rx: .6, fill: "#3fd0e0" }), S("path", { d: "M-1.2 -1.6 l-1 -1.3 M1.2 -1.6 l1 -1.3", stroke: "#3fd0e0", "stroke-width": .6 })],
+    pad: () => [S("rect", { x: -2.8, y: -1.4, width: 5.6, height: 2.9, rx: 1.4, fill: "#ff6aa8" }), S("circle", { cx: -1.3, cy: 0, r: .5, fill: "#12081f" }), S("circle", { cx: 1.3, cy: 0, r: .5, fill: "#12081f" })],
+    cash: () => { const t = S("text", { x: 0, y: 2.2, "text-anchor": "middle", class: "radar-cash" }); t.textContent = "$"; return [t]; },
+    cops: () => [S("path", { d: "M0 -3 l.9 2 2.1.2 -1.6 1.4 .5 2.1 -1.9 -1.1 -1.9 1.1 .5 -2.1 -1.6 -1.4 2.1 -.2z", class: "radar-cops" })],
+  };
+  const blips = targets.map((t, i) => {
+    const a = S("a", { href: "#" + t.id, "aria-label": "Go to " + names[i], class: "radar-blip" });
+    const g = S("g", {}, S("circle", { r: 4.4, fill: "#12081f", stroke: "#fff", "stroke-width": .7 }), ...icon[kinds[i]]());
+    const title = S("title", {}); title.textContent = names[i];
+    a.append(title, g); map.append(a);
+    return { g, t };
+  });
+  const arrow = S("path", { d: "M0 -4.2 L3.2 3.4 L0 1.8 L-3.2 3.4Z", fill: "#fff", stroke: "#12081f", "stroke-width": .7, "stroke-linejoin": "round", class: "radar-arrow" });
+  map.append(arrow);
+  svg.append(map,
+    S("circle", { cx: 50, cy: 50, r: 47.5, fill: "none", stroke: "#0f0718", "stroke-width": 4 }),
+    S("circle", { cx: 50, cy: 50, r: 45.4, fill: "none", stroke: "rgba(255,255,255,.45)", "stroke-width": .7 }),
+    S("circle", { cx: 50, cy: 5, r: 4.2, fill: "#0f0718" }));
+  const n = S("text", { x: 50, y: 7, "text-anchor": "middle", class: "radar-n" }); n.textContent = "N"; svg.append(n);
+  const nav = el("nav", { class: "radar", "aria-label": "Page map" }, svg);
+  document.body.append(nav);
+
+  // Map in scroll space: a blip sits where its link scrolls to, so after a click the
+  // arrow lands exactly on it. The arrow is the current scroll position.
+  const barH = () => document.querySelector(".controls")?.offsetHeight || 50;
+  const maxScroll = () => Math.max(1, document.documentElement.scrollHeight - innerHeight);
+  const Y = sy => 8 + 84 * Math.min(1, Math.max(0, sy / maxScroll()));
+  let lastY = scrollY, facing = 180, raf = 0;
+  const place = () => {
+    raf = 0;
+    const bh = barH();
+    document.documentElement.style.setProperty("--bar-h", bh + "px");
+    blips.forEach(({ g, t }) => g.setAttribute("transform", `translate(40 ${Y(t.offsetTop - bh).toFixed(1)})`));
+    if (scrollY !== lastY) facing = scrollY > lastY ? 180 : 0;
+    lastY = scrollY;
+    arrow.setAttribute("transform", `translate(40 ${Y(scrollY).toFixed(1)}) rotate(${facing})`);
+    nav.classList.toggle("shown", scrollY > document.querySelector(".hero").offsetHeight * .6);
+    nav.style.top = bh + 10 + "px"; // just below the sticky range bar
+  };
+  const queue = () => { if (!raf) raf = requestAnimationFrame(place); };
+  addEventListener("scroll", queue, { passive: true });
+  addEventListener("resize", queue);
+  new ResizeObserver(queue).observe(document.body); // cards render after data loads
+  place();
+}
+initRadar();
+
+// Cash pickups next to the Money title: one drops when the section scrolls into view,
+// and every click on the title drops another. Original artwork (spinning banknote bundle).
+function initCashDrops() {
+  const h2 = [...document.querySelectorAll("main section > h2")].find(h => /money/i.test(h.textContent));
+  if (!h2) return;
+  const sec = h2.closest("section");
+  sec.classList.add("has-cash");
+  const layer = el("div", { class: "cash-layer", "aria-hidden": "true" });
+  sec.prepend(layer);
+  h2.classList.add("cash-title");
+  h2.setAttribute("role", "button"); h2.tabIndex = 0;
+  h2.setAttribute("aria-label", "Money: click to drop cash");
+  const MAX = 80;
+  const BUNDLE = '<svg viewBox="0 0 40 30"><rect x="3" y="9" width="34" height="17" rx="2" fill="#1f7a3e" stroke="#0b2a15" stroke-width="1.4"/>'
+    + '<rect x="1.5" y="5.5" width="34" height="17" rx="2" fill="#2ea153" stroke="#0b2a15" stroke-width="1.4"/>'
+    + '<rect x="0" y="2" width="34" height="17" rx="2" fill="#4cd27a" stroke="#0b2a15" stroke-width="1.4"/>'
+    + '<rect x="13" y="2" width="8" height="17" fill="#f3ead2" stroke="#0b2a15" stroke-width="1.2"/>'
+    + '<text x="17" y="14.6" text-anchor="middle" font-size="10" font-weight="900" font-family="system-ui,sans-serif" fill="#1f7a3e">$</text></svg>';
+  // to the right of the word, in a band the height of the title (wider on big screens)
+  const spot = () => {
+    const sr = sec.getBoundingClientRect(), hr = h2.getBoundingClientRect();
+    const textW = Math.min(hr.width, (() => { const r = document.createRange(); r.selectNodeContents(h2); return r.getBoundingClientRect().width; })());
+    const x0 = hr.left - sr.left + textW + 10, x1 = Math.max(x0 + 60, Math.min(sr.width - 48, x0 + 420));
+    const y0 = hr.top - sr.top - 14, y1 = hr.top - sr.top + hr.height - 22;
+    return [x0 + Math.random() * (x1 - x0), y0 + Math.random() * Math.max(10, y1 - y0)];
+  };
+  const drop = (pop) => {
+    if (layer.children.length >= MAX) layer.firstElementChild.remove();
+    const [x, y] = spot();
+    const b = el("span", { class: "cash-pickup" });
+    const spin = el("span", { class: "cash-spin" }); spin.innerHTML = BUNDLE; b.append(spin);
+    b.style.left = x + "px"; b.style.top = y + "px";
+    b.style.setProperty("--d", (Math.random() * -2.4).toFixed(2) + "s");
+    layer.append(b);
+    if (pop) {
+      const p = el("span", { class: "cash-pop" }, "+$" + (Math.floor(Math.random() * 9) + 1) * 100);
+      p.style.left = x + "px"; p.style.top = y - 6 + "px";
+      layer.append(p); setTimeout(() => p.remove(), 900);
+    }
+  };
+  h2.addEventListener("click", () => drop(true));
+  h2.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); drop(true); } });
+  new IntersectionObserver((entries, io) => {
+    if (entries.some(e => e.isIntersecting)) { drop(false); io.disconnect(); }
+  }, { threshold: 0.4 }).observe(h2);
+}
+initCashDrops();
