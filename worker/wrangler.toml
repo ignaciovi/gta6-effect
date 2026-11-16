@@ -1,0 +1,10 @@
+# Cloudflare Worker that starts the "Collect & deploy" GitHub workflow every 30 min.
+# GitHub's own cron is best-effort and silently drops runs; this is the reliable clock.
+# The GitHub token lives only as a Worker secret:  npx wrangler secret put GITHUB_TOKEN
+name = "gta6-effect-timer"
+main = "index.js"
+compatibility_date = "2026-11-01"
+workers_dev = false   # cron only: no public URL
+
+[triggers]
+crons = ["*/30 * * * *"]
