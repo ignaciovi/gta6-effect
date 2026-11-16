@@ -45,10 +45,12 @@ function etParts(ts) {
   return { hour: +p.hour % 24, weekend: p.weekday === "Sat" || p.weekday === "Sun" };
 }
 const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
-// "Wed 12th, 11:00 PM" (viewer's local time)
+// Viewer's local time zone, short name ("GMT", "EST", "GMT+1"), for any time shown.
+const tz = ts => new Intl.DateTimeFormat("en-US", { timeZoneName: "short" }).formatToParts(new Date(ts)).find(p => p.type === "timeZoneName")?.value || "";
+// "Wed 12th, 11:00 PM GMT" (viewer's local time)
 const fmtTime = ts => {
   const d = new Date(ts);
-  return `${d.toLocaleString("en-US", { weekday: "short" })} ${ordinal(d.getDate())}, ${d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  return `${d.toLocaleString("en-US", { weekday: "short" })} ${ordinal(d.getDate())}, ${d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit" })} ${tz(ts)}`.trim();
 };
 
 const series = (src, key) => (DATA[src]?.series?.[key] || []).filter(p => p[1] != null);
@@ -504,7 +506,7 @@ function renderAll() {
   setChartWidth($("#sec-work"));
   renderWork(); renderAttention(); renderPlayers(); renderMarket();
   const gen = DATA.meta?.generated;
-  $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
+  $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} ${tz(gen)}` : "";
   const st = DATA.status || {};
   const ok = Object.values(st).filter(x => x.state === "ok").length;
   $("#status-line").textContent = Object.keys(st).length ? `Sources healthy: ${ok}/${Object.keys(st).length}` : "";
