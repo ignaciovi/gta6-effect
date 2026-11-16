@@ -650,18 +650,44 @@ function initCashDrops() {
     + '<rect x="0" y="2" width="34" height="17" rx="2" fill="#4cd27a" stroke="#0b2a15" stroke-width="1.4"/>'
     + '<rect x="13" y="2" width="8" height="17" fill="#f3ead2" stroke="#0b2a15" stroke-width="1.2"/>'
     + '<text x="17" y="14.6" text-anchor="middle" font-size="10" font-weight="900" font-family="system-ui,sans-serif" fill="#1f7a3e">$</text></svg>';
-  // to the right of the word, in a band the height of the title (wider on big screens)
+  // Land as close to the word as possible without covering any text: candidates in the
+  // free space around the title are scored by distance from the word, with some jitter
+  // so bundles pile up loosely; anything overlapping text (stars, title, intro) is skipped.
+  const BW = 44, BH = 34;
+  const textRects = () => {
+    const out = [];
+    for (const n of [h2, sec.querySelector(".wanted"), sec.querySelector(".section-sub")]) {
+      if (!n) continue;
+      const r = document.createRange(); r.selectNodeContents(n);
+      out.push(...[...r.getClientRects()].filter(q => q.width && q.height));
+      if (n.classList.contains("wanted")) out.push(n.getBoundingClientRect());
+    }
+    return out;
+  };
   const spot = () => {
-    const sr = sec.getBoundingClientRect(), hr = h2.getBoundingClientRect();
-    const textW = Math.min(hr.width, (() => { const r = document.createRange(); r.selectNodeContents(h2); return r.getBoundingClientRect().width; })());
-    const x0 = hr.left - sr.left + textW + 10, x1 = Math.max(x0 + 60, Math.min(sr.width - 48, x0 + 420));
-    const y0 = hr.top - sr.top - 14, y1 = hr.top - sr.top + hr.height - 22;
-    return [x0 + Math.random() * (x1 - x0), y0 + Math.random() * Math.max(10, y1 - y0)];
+    const sr = sec.getBoundingClientRect();
+    const word = (() => { const r = document.createRange(); r.selectNodeContents(h2); return r.getBoundingClientRect(); })();
+    const blocks = textRects().map(q => ({ l: q.left - sr.left - 4, t: q.top - sr.top - 3, r: q.right - sr.left + 4, b: q.bottom - sr.top + 3 }));
+    const wx = word.right - sr.left, wy = word.top - sr.top + word.height / 2;
+    const free = (x, y) => x >= 0 && x + BW <= sr.width && !blocks.some(k => x < k.r && x + BW > k.l && y < k.b && y + BH > k.t);
+    let best = null, bestScore = Infinity;
+    for (let k = 0; k < 160; k++) {
+      const x = wx - 60 + Math.random() * 380, y = wy - 70 + Math.random() * 100;
+      if (!free(x, y)) continue;
+      const score = Math.hypot(x - wx, (y + BH / 2 - wy) * 1.6) + Math.random() * 70;
+      if (score < bestScore) { bestScore = score; best = [x, y]; }
+    }
+    best ||= [wx + 8, wy - BH / 2];
+    return [best[0], best[1], word.left - sr.left + word.width / 2 - BW / 2, wy - BH / 2];
   };
   const drop = (pop) => {
     if (layer.children.length >= MAX) layer.firstElementChild.remove();
-    const [x, y] = spot();
+    const [x, y, cx, cy] = spot();
     const b = el("span", { class: "cash-pickup" });
+    // start inside the word, arc up and out, land at (x, y)
+    b.style.setProperty("--fx", (cx - x).toFixed(0) + "px");
+    b.style.setProperty("--fy", (cy - y).toFixed(0) + "px");
+    b.style.setProperty("--peak", (Math.min(cy, y) - y - 50 - Math.random() * 40).toFixed(0) + "px");
     const spin = el("span", { class: "cash-spin" }); spin.innerHTML = BUNDLE; b.append(spin);
     b.style.left = x + "px"; b.style.top = y + "px";
     b.style.setProperty("--d", (Math.random() * -2.4).toFixed(2) + "s");
