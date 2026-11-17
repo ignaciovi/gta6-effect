@@ -1,68 +1,68 @@
 {
  "steam": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:00:59Z",
+  "last_ok": "2026-11-17T16:31:11Z",
   "error": null,
-  "last_run": "2026-11-17T16:00:59Z"
+  "last_run": "2026-11-17T16:31:11Z"
  },
  "trends": {
   "state": "ok",
-  "last_ok": "2026-11-17T15:33:10Z",
+  "last_ok": "2026-11-17T16:33:14Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:07Z"
+  "last_run": "2026-11-17T16:33:14Z"
  },
  "appstore": {
-  "state": "ok",
+  "state": "error",
   "last_ok": "2026-11-17T16:03:46Z",
-  "error": null,
-  "last_run": "2026-11-17T16:03:46Z"
+  "error": "ConnectionError: HTTPSConnectionPool(host='rss.marketingtools.apple.com', port=443): Max retries exceeded with url: /api/v2/us/apps/top-free/100/apps.json (Caused by ReadTimeoutError(\"HTTPSConnectionPool(host='rss.marketingtools.apple.com', port=443): Read timed out. (read timeout=30)\"))",
+  "last_run": "2026-11-17T16:35:27Z"
  },
  "trending": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:09Z",
+  "last_ok": "2026-11-17T16:33:15Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:09Z"
+  "last_run": "2026-11-17T16:33:15Z"
  },
  "twitch": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:47Z",
+  "last_ok": "2026-11-17T16:35:28Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:47Z"
+  "last_run": "2026-11-17T16:35:28Z"
  },
  "youtube": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:52Z",
+  "last_ok": "2026-11-17T16:35:33Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:52Z"
+  "last_run": "2026-11-17T16:35:33Z"
  },
  "stocks": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:56Z",
+  "last_ok": "2026-11-17T16:35:35Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:56Z"
+  "last_run": "2026-11-17T16:35:35Z"
  },
  "tomtom": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:53Z",
+  "last_ok": "2026-11-17T16:35:34Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:53Z"
+  "last_run": "2026-11-17T16:35:34Z"
  },
  "radar": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:55Z",
+  "last_ok": "2026-11-17T16:35:35Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:55Z"
+  "last_run": "2026-11-17T16:35:35Z"
  },
  "github": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:01:02Z",
+  "last_ok": "2026-11-17T16:31:14Z",
   "error": null,
-  "last_run": "2026-11-17T16:01:02Z"
+  "last_run": "2026-11-17T16:31:14Z"
  },
  "wikiedits": {
   "state": "ok",
-  "last_ok": "2026-11-17T16:03:07Z",
+  "last_ok": "2026-11-17T16:33:08Z",
   "error": null,
-  "last_run": "2026-11-17T16:03:07Z"
+  "last_run": "2026-11-17T16:33:08Z"
  }
 }
