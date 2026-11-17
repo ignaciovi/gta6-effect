@@ -609,7 +609,7 @@ function initRadar() {
 
   // Map in scroll space: a blip sits where its link scrolls to, so after a click the
   // arrow lands exactly on it. The arrow is the current scroll position.
-  const barH = () => document.querySelector(".controls")?.offsetHeight || 50;
+  const barH = () => 16; // range bar scrolls away with the page: just a small top gap
   const maxScroll = () => Math.max(1, document.documentElement.scrollHeight - innerHeight);
   const Y = sy => 8 + 84 * Math.min(1, Math.max(0, sy / maxScroll()));
   let lastY = scrollY, facing = 180, raf = 0;
@@ -622,7 +622,7 @@ function initRadar() {
     lastY = scrollY;
     arrow.setAttribute("transform", `translate(40 ${Y(scrollY).toFixed(1)}) rotate(${facing})`);
     nav.classList.toggle("shown", scrollY > document.querySelector(".hero").offsetHeight * .6);
-    nav.style.top = bh + 10 + "px"; // just below the sticky range bar
+    nav.style.top = bh + "px";
   };
   const queue = () => { if (!raf) raf = requestAnimationFrame(place); };
   addEventListener("scroll", queue, { passive: true });
