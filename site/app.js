@@ -421,7 +421,7 @@ function renderAttention() {
 function renderWork() {
   const sec = $("#sec-work"); sec.replaceChildren();
   sec.append(card({ title: "GitHub pull requests opened / hour", headline: "{v} GitHub pull requests opened in the last hour", pts: series("github", "prs_per_hour"), sense: -1, name: "PRs per hour", step: true, maxAgeH: 4,
-    note: "Global developer output. Are devs shipping or playing?" }));
+    note: "A pull request is a developer submitting a piece of finished code on GitHub, where most of the world’s software is built. Fewer per hour means less code being shipped." }));
   // Wikipedia edits are still collected (data/wikiedits.json) but hidden from the page.
   const sickTerms = ["call in sick", "sick day"];
   const sick = sumSeries(sickTerms.map(k => series("trends", `sick:${k}`)));
