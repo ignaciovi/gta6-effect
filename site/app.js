@@ -504,7 +504,10 @@ function setChartWidth(sec) {
 
 function renderAll() {
   setChartWidth($("#sec-work"));
-  renderWork(); renderAttention(); renderPlayers(); renderMarket();
+  // One broken section must not blank the ones after it.
+  for (const f of [renderWork, renderAttention, renderPlayers, renderMarket]) {
+    try { f(); } catch (e) { console.error(f.name, e); }
+  }
   const gen = DATA.meta?.generated;
   $("#updated").textContent = gen ? `Updated ${new Date(gen).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} ${tz(gen)}` : "";
   const st = DATA.status || {};
@@ -512,7 +515,20 @@ function renderAll() {
   $("#status-line").textContent = Object.keys(st).length ? `Sources healthy: ${ok}/${Object.keys(st).length}` : "";
 }
 
+// A browser can pair a cached old index.html with the new app.js (the server ignores ?v=),
+// so sections added since are missing. Reload once, bypassing the cached page.
+function staleHtml() {
+  if ($("#sec-players")) {
+    if (/[?&]r=/.test(location.search)) history.replaceState(null, "", location.pathname + location.hash);
+    return false;
+  }
+  try { if (sessionStorage.getItem("reloaded")) return false; sessionStorage.setItem("reloaded", "1"); } catch { return false; }
+  location.replace(location.pathname + "?r=" + Date.now() + location.hash);
+  return true;
+}
+
 async function load() {
+  if (staleHtml()) return;
   document.body.classList.add("loading");
   const results = await Promise.all(SOURCES.map(s =>
     fetch(`${DATA_URL}${s}.json?t=${Math.floor(Date.now() / 300e3)}`).then(r => (r.ok ? r.json() : null)).catch(() => null)));
