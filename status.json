@@ -1,68 +1,68 @@
 {
  "steam": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:31:01Z",
+  "last_ok": "2026-11-25T17:00:58Z",
   "error": null,
-  "last_run": "2026-11-25T16:31:01Z"
+  "last_run": "2026-11-25T17:00:58Z"
  },
  "trends": {
   "state": "ok",
   "last_ok": "2026-11-25T16:33:46Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:46Z"
+  "last_run": "2026-11-25T17:03:05Z"
  },
  "appstore": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:48Z",
+  "last_ok": "2026-11-25T17:03:08Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:48Z"
+  "last_run": "2026-11-25T17:03:08Z"
  },
  "trending": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:47Z",
+  "last_ok": "2026-11-25T17:03:06Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:47Z"
+  "last_run": "2026-11-25T17:03:06Z"
  },
  "twitch": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:48Z",
+  "last_ok": "2026-11-25T17:03:08Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:48Z"
+  "last_run": "2026-11-25T17:03:08Z"
  },
  "youtube": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:53Z",
+  "last_ok": "2026-11-25T17:03:14Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:53Z"
+  "last_run": "2026-11-25T17:03:14Z"
  },
  "stocks": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:55Z",
+  "last_ok": "2026-11-25T17:03:16Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:55Z"
+  "last_run": "2026-11-25T17:03:16Z"
  },
  "tomtom": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:53Z",
+  "last_ok": "2026-11-25T17:03:14Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:53Z"
+  "last_run": "2026-11-25T17:03:14Z"
  },
  "radar": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:54Z",
+  "last_ok": "2026-11-25T17:03:15Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:54Z"
+  "last_run": "2026-11-25T17:03:15Z"
  },
  "github": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:31:04Z",
+  "last_ok": "2026-11-25T17:01:04Z",
   "error": null,
-  "last_run": "2026-11-25T16:31:04Z"
+  "last_run": "2026-11-25T17:01:04Z"
  },
  "wikiedits": {
   "state": "ok",
-  "last_ok": "2026-11-25T16:33:01Z",
+  "last_ok": "2026-11-25T17:03:05Z",
   "error": null,
-  "last_run": "2026-11-25T16:33:01Z"
+  "last_run": "2026-11-25T17:03:05Z"
  }
 }
