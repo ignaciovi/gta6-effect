@@ -1,68 +1,68 @@
 {
  "steam": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:01:00Z",
+  "last_ok": "2026-11-26T09:30:56Z",
   "error": null,
-  "last_run": "2026-11-26T09:01:00Z"
+  "last_run": "2026-11-26T09:30:56Z"
  },
  "trends": {
   "state": "ok",
-  "last_ok": "2026-11-26T08:33:11Z",
+  "last_ok": "2026-11-26T09:31:46Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:03Z"
+  "last_run": "2026-11-26T09:31:46Z"
  },
  "appstore": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:05Z",
+  "last_ok": "2026-11-26T09:31:48Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:05Z"
+  "last_run": "2026-11-26T09:31:48Z"
  },
  "trending": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:05Z",
+  "last_ok": "2026-11-26T09:31:47Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:05Z"
+  "last_run": "2026-11-26T09:31:47Z"
  },
  "twitch": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:06Z",
+  "last_ok": "2026-11-26T09:31:49Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:06Z"
+  "last_run": "2026-11-26T09:31:49Z"
  },
  "youtube": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:12Z",
+  "last_ok": "2026-11-26T09:31:54Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:12Z"
+  "last_run": "2026-11-26T09:31:54Z"
  },
  "stocks": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:14Z",
+  "last_ok": "2026-11-26T09:31:56Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:14Z"
+  "last_run": "2026-11-26T09:31:56Z"
  },
  "tomtom": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:13Z",
+  "last_ok": "2026-11-26T09:31:54Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:13Z"
+  "last_run": "2026-11-26T09:31:54Z"
  },
  "radar": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:03:13Z",
+  "last_ok": "2026-11-26T09:31:55Z",
   "error": null,
-  "last_run": "2026-11-26T09:03:13Z"
+  "last_run": "2026-11-26T09:31:55Z"
  },
  "github": {
   "state": "ok",
-  "last_ok": "2026-11-26T09:01:02Z",
+  "last_ok": "2026-11-26T09:31:00Z",
   "error": null,
-  "last_run": "2026-11-26T09:01:02Z"
+  "last_run": "2026-11-26T09:31:00Z"
  },
  "wikiedits": {
-  "state": "ok",
+  "state": "error",
   "last_ok": "2026-11-26T09:03:03Z",
-  "error": null,
-  "last_run": "2026-11-26T09:03:03Z"
+  "error": "RetryError: HTTPSConnectionPool(host='en.wikipedia.org', port=443): Max retries exceeded with url: /w/api.php?action=query&list=recentchanges&rctype=edit%7Cnew&rcshow=%21bot&rcprop=timestamp&rclimit=max&format=json&rcstart=2026-11-26T07%3A59%3A59Z&rcend=2026-11-26T07%3A00%3A00Z&maxlag=5 (Caused by R",
+  "last_run": "2026-11-26T09:31:40Z"
  }
 }
